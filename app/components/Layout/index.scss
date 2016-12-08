@@ -1,0 +1,10 @@
+#layout{
+    height: inherit;
+    background-color: rgb(255, 199, 199);
+    position: relative;
+    .btn-group{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+}
