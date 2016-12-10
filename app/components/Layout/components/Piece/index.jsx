@@ -10,8 +10,8 @@ class Piece extends Component{
     render(){
         return (
             <div className="piece" ref={this.props.getPosition}>
-                <span>{this.props.posX}</span>&nbsp;
-                <span>{this.props.posY}</span>
+                <p>X:{this.props.posX}</p>
+                <p>Y:{this.props.posY}</p>
             </div>
         )
     }
