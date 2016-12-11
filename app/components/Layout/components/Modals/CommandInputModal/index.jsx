@@ -1,7 +1,10 @@
 import React, {Component, PropTypes} from 'react';
-import { Modal, Button, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import { Modal, Button, Table, Tooltip, OverlayTrigger, Collapse} from 'react-bootstrap';
+import  Dropzone from 'react-dropzone';
+import papaParse from 'papaparse';
 import update from 'immutability-helper';
 import CommandOption from './components/CommandOption';
+import './index.scss';
 
 class CommandInputModal extends Component{
     constructor(props){
@@ -10,32 +13,47 @@ class CommandInputModal extends Component{
     }
 
     init(){
-        this.CommandOptionList = [
-            update(this.props.defaultCommands,{})
-        ];
         this.state = {
-            CommandOptionList: this.CommandOptionList
+            CommandOptionList: [Object.assign({},this.props.defaultCommands)],
+            showFileUpload: false
         }
         this.addCommands = this.addCommands.bind(this);
         this.removeCommand = this.removeCommand.bind(this);
         this.setCommand = this.setCommand.bind(this);
         this.setSpeed = this.setSpeed.bind(this);
         this.setExecutionNum = this.setExecutionNum.bind(this);
+        this.setDistance = this.setDistance.bind(this);
         this.start = this.start.bind(this);
     }
 
     addCommands(){
         this.setState({
-            CommandOptionList: this.state.CommandOptionList.concat([update(this.props.defaultCommands,{})])
+            CommandOptionList: this.state.CommandOptionList.slice().concat([Object.assign({},this.props.defaultCommands)])
         });
     }
 
     removeCommand(index,event){
         this.setState({
             CommandOptionList: this.state.CommandOptionList.filter((item,pos)=>{
+
                 return index !== pos;
             })
         })
+    }
+
+    setDistance(index,event){
+        if(parseInt(event.target.value,10) < 0){
+            event.target.value = 0;
+        }
+        this.setState({
+            CommandOptionList: this.state.CommandOptionList.map((options,pos)=>{
+                if(index === pos){
+                    options.distance = parseInt(event.target.value,10)
+                    return options;
+                }
+                return options;
+            })
+        });
     }
 
     setCommand(index,event){
@@ -63,6 +81,9 @@ class CommandInputModal extends Component{
     }
 
     setExecutionNum(index,event){
+        if(parseInt(event.target.value,10) < 0){
+            event.target.value = 0;
+        }
         this.setState({
             CommandOptionList: this.state.CommandOptionList.map((options,pos)=>{
                 if(index === pos){
@@ -75,11 +96,22 @@ class CommandInputModal extends Component{
     }
 
     start(){
-        console.log(this.state.CommandOptionList)
-        // this.props.automateDrones(this.state.CommandOptionList.slice());
-        // this.setState({
-        //     CommandOptionList: this.CommandOptionList
-        // });
+        this.props.automateDrones(this.state.CommandOptionList.slice());
+        this.setState({
+            CommandOptionList: [Object.assign({},this.props.defaultCommands)]
+        });
+    }
+    onDrop(acceptedFiles, rejectedFiles) {
+
+        papaParse.parse(acceptedFiles[0],{
+            delimiter: ',',
+            header: true,
+            complete:(results)=>{
+                console.log(results)
+            }
+        })
+      console.log('Accepted files: ', acceptedFiles);
+      console.log('Rejected files: ', rejectedFiles);
     }
 
     render(){
@@ -89,13 +121,17 @@ class CommandInputModal extends Component{
         return(
             <Modal
                 show={this.props.showModal}
-                onHide={this.props.close}>
+                onHide={this.props.close} id="CommandInputModal">
                 <Modal.Header closeButton>
                     <Modal.Title>
                         Command Input
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                    <Dropzone onDrop={this.onDrop} className="dropZone" >
+                        <button type="button" className="btn btn-primary">Upload Commands (Csv Only)</button>
+                    </Dropzone>
+                    <hr/>
                     <Table responsive striped>
                         <thead>
                             <tr>
@@ -108,6 +144,9 @@ class CommandInputModal extends Component{
                                 </th>
                                 <th>
                                     Drone Speed
+                                </th>
+                                <th>
+                                    Distance
                                 </th>
                                 <th>
                                     Drone #
@@ -124,14 +163,20 @@ class CommandInputModal extends Component{
                                         <CommandOption
                                             key={index}
                                             index={index}
+                                            command={option.command}
+                                            speed={option.speed}
+                                            distance={option.distance}
+                                            listOfDistance={option.listOfDistance}
                                             lengthOfCommandOptionList={this.state.CommandOptionList.length}
                                             listOfCommands={option.listOfCommands}
+                                            listOfExecutionNum={option.listOfExecutionNum}
                                             executionNum={option.executionNum}
                                             listOfSpeeds={option.listOfSpeeds}
                                             removeCommand={this.removeCommand}
                                             setCommand={this.setCommand}
                                             setSpeed={this.setSpeed}
                                             setExecutionNum={this.setExecutionNum}
+                                            setDistance={this.setDistance}
                                              />
                                     )
                                 })

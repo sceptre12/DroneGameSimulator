@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
+import series from 'async/series';
 import {Piece, CommandInputModal} from './components';
 import './index.scss';
 
@@ -27,13 +28,29 @@ class Layout extends Component{
             250,
             125
         ];
+        const listOfDistance = [
+            50,
+            40,
+            30,
+            20,
+            10
+        ];
+        const listOfExecutionNum = [
+            4,
+            3,
+            2,
+            1
+        ]
         this.state={
             defaultCommands: {
                 listOfCommands,
                 listOfSpeeds,
+                listOfDistance,
+                listOfExecutionNum,
                 command: 'Up',
                 speed: 1000,
-                executionNum: 0
+                distance: 50,
+                executionNum: 4
             },
             drone: {
                 element: {},
@@ -46,7 +63,8 @@ class Layout extends Component{
             },
             showCommandModal: false,
             commandHistory: [],
-            currentCommands: []
+            currentCommands: [],
+            listOfTimers: []
         }
         this.getPosition = this.getPosition.bind(this);
         this.moveUp = this.moveUp.bind(this);
@@ -61,17 +79,30 @@ class Layout extends Component{
         this.automateDrones = this.automateDrones.bind(this);
     }
 
-    getPosition(el){
-        var xPos = 0;
-        var yPos = 0;
-        var element = el;
+    getElementPos(el){
+        let xPos = 0;
+        let yPos = 0;
+        let element = el;
         xPos += (el.offsetLeft - el.scrollLeft + el.clientLeft);
         yPos += (el.offsetTop - el.scrollTop + el.clientTop);
+        return {
+            x: xPos,
+            y: yPos
+        }
+    }
+
+    getPosition(el,cb){
+        let element = el;
+        let position = this.getElementPos(el);
         this.setState({
             drone: {
                 element: element,
-                x: xPos,
-                y: yPos
+                x: position.x,
+                y: position.y
+            }
+        },(something)=>{
+            if(cb){
+                cb(null,'success');
             }
         });
     }
@@ -92,38 +123,72 @@ class Layout extends Component{
         window.onkeyup = null;
     }
 
-    moveUp(){
+    moveUp(distance,cb){
+        let moveAmount = distance || 10;
         let topVal = parseInt(window.getComputedStyle(this.state.drone.element).top,10);
-        if(topVal - 10 < 0 ) return ;
-        this.state.drone.element.style.top =`${topVal - 10}px`;
-        this.getPosition(this.state.drone.element);
+        if(topVal - moveAmount < 0 ) return ;
+        this.state.drone.element.style.top =`${topVal - moveAmount}px`;
+        this.getPosition(this.state.drone.element,cb);
     }
 
-    moveLeft(){
+    moveLeft(distance,cb){
+        let moveAmount = distance || 10;
         let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left,10);
-        if(leftVal - 10 < 0 ) return ;
-        this.state.drone.element.style.left =`${leftVal - 10}px`;
-        this.getPosition(this.state.drone.element);
+        if(leftVal - moveAmount < 0 ) return ;
+        this.state.drone.element.style.left =`${leftVal - moveAmount}px`;
+        this.getPosition(this.state.drone.element,cb);
     }
 
-    moveRight(){
+    moveRight(distance,cb){
+        let moveAmount = distance || 10;
         let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left, 10);
         let pieceWidth = parseInt(window.getComputedStyle(this.state.drone.element).width,10);
-        if((leftVal + pieceWidth) + 10 > this.state.container.width ) return ;
-        this.state.drone.element.style.left =`${leftVal + 10}px`;
-        this.getPosition(this.state.drone.element);
+        if((leftVal + pieceWidth) + moveAmount > this.state.container.width ) return ;
+        this.state.drone.element.style.left =`${leftVal + moveAmount}px`;
+        this.getPosition(this.state.drone.element,cb);
     }
 
-    moveDown(){
+    moveDown(distance,cb){
+        let moveAmount = distance || 10;
         let topVal = parseInt(window.getComputedStyle(this.state.drone.element).top,10);
         let pieceHeight = parseInt(window.getComputedStyle(this.state.drone.element).height,10);
-        if((topVal + pieceHeight) + 10 > this.state.container.height ) return ;
-        this.state.drone.element.style.top =`${topVal + 10}px`;
-        this.getPosition(this.state.drone.element);
+        if((topVal + pieceHeight) + moveAmount > this.state.container.height ) return ;
+        this.state.drone.element.style.top =`${topVal + moveAmount}px`;
+        this.getPosition(this.state.drone.element,cb);
+    }
+
+    queueCommands(queue,executeTimes,action,distance,speed){
+        while(executeTimes > 0){
+            queue.push((cb)=>{
+                let timer = window.setTimeout(action.bind(this,distance,cb),speed);
+            });
+            executeTimes --;
+        }
     }
 
     runProgram(listOfCommands){
+        let commandQueue = [];
+        listOfCommands.forEach((commandOptions)=>{
+            switch(commandOptions.command){
+                case 'Up':
+                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveUp,commandOptions.distance,commandOptions.speed);
+                    break;
+                case 'Down':
+                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveDown,commandOptions.distance,commandOptions.speed);
+                    break;
+                case 'Left':
+                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveLeft,commandOptions.distance,commandOptions.speed);
+                    break;
+                case 'Right':
+                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveRight,commandOptions.distance,commandOptions.speed);
+                    break;
+            }
+        });
 
+        // Executes the commands syncroniously
+        series(commandQueue, (err,results)=>{
+            console.log(results);
+        });
     }
 
     automateDrones(CommandList){
@@ -133,7 +198,7 @@ class Layout extends Component{
             currentCommands: CommandList,
             showCommandModal: false
         });
-
+        this.runProgram(CommandList);
         // TODO Insert Coundown Overlay code
 
     }
