@@ -6,16 +6,18 @@ class Piece extends Component{
         super(props);
     }
 
-
     render(){
+        const {posX,posY, getPosition} = this.props;
         return (
-            <div className="piece" ref={this.props.getPosition}>
-                <p>X:{this.props.posX}</p>
-                <p>Y:{this.props.posY}</p>
-            </div>
+                <div className="piece"ref={getPosition} >
+                    <p>X:{posX}</p>
+                    <p>Y:{posY}</p>
+                </div>
         )
     }
 }
+
+
 
 Piece.propTypes = {
     getPosition: PropTypes.func.isRequired,

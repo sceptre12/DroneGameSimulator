@@ -101,17 +101,21 @@ class CommandInputModal extends Component{
             CommandOptionList: [Object.assign({},this.props.defaultCommands)]
         });
     }
-    onDrop(acceptedFiles, rejectedFiles) {
 
-        papaParse.parse(acceptedFiles[0],{
-            delimiter: ',',
-            header: true,
-            complete:(results)=>{
-                console.log(results)
-            }
-        })
-      console.log('Accepted files: ', acceptedFiles);
-      console.log('Rejected files: ', rejectedFiles);
+    fileUpload(acceptedFiles, rejectedFiles) {
+        // TODO Create the method from the layout that will be called in here
+        // its supposed to take this json data and create commands inside of the application
+        if(!rejectedFiles.length){
+            papaParse.parse(acceptedFiles[0],{
+                delimiter: ',',
+                header: true,
+                complete:(results)=>{
+                    console.log(results)
+                }
+            })
+        }else{
+            console.log('File has been rejected');
+        }
     }
 
     render(){
@@ -128,7 +132,7 @@ class CommandInputModal extends Component{
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Dropzone onDrop={this.onDrop} className="dropZone" >
+                    <Dropzone onDrop={this.fileUpload} className="dropZone" >
                         <button type="button" className="btn btn-primary">Upload Commands (Csv Only)</button>
                     </Dropzone>
                     <hr/>

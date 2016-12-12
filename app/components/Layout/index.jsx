@@ -80,25 +80,20 @@ class Layout extends Component{
     }
 
     getElementPos(el){
-        let xPos = 0;
-        let yPos = 0;
-        let element = el;
-        xPos += (el.offsetLeft - el.scrollLeft + el.clientLeft);
-        yPos += (el.offsetTop - el.scrollTop + el.clientTop);
         return {
-            x: xPos,
-            y: yPos
+            x: (el.offsetLeft - el.scrollLeft + el.clientLeft),
+            y: (el.offsetTop - el.scrollTop + el.clientTop)
         }
     }
 
     getPosition(el,cb){
         let element = el;
-        let position = this.getElementPos(el);
+        const {x,y} = this.getElementPos(el);
         this.setState({
             drone: {
-                element: element,
-                x: position.x,
-                y: position.y
+                element,
+                x,
+                y
             }
         },(something)=>{
             if(cb){
@@ -140,6 +135,7 @@ class Layout extends Component{
     }
 
     moveRight(distance,cb){
+
         let moveAmount = distance || 10;
         let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left, 10);
         let pieceWidth = parseInt(window.getComputedStyle(this.state.drone.element).width,10);
@@ -149,12 +145,13 @@ class Layout extends Component{
     }
 
     moveDown(distance,cb){
+        const {drone:{element} , container: {height}} = this.state;
         let moveAmount = distance || 10;
-        let topVal = parseInt(window.getComputedStyle(this.state.drone.element).top,10);
-        let pieceHeight = parseInt(window.getComputedStyle(this.state.drone.element).height,10);
-        if((topVal + pieceHeight) + moveAmount > this.state.container.height ) return ;
-        this.state.drone.element.style.top =`${topVal + moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
+        let topVal = parseInt(window.getComputedStyle(element).top,10);
+        let pieceHeight = parseInt(window.getComputedStyle(element).height,10);
+        if((topVal + pieceHeight) + moveAmount > height ) return ;
+        element.style.top =`${topVal + moveAmount}px`;
+        this.getPosition(element,cb);
     }
 
     queueCommands(queue,executeTimes,action,distance,speed){
@@ -169,20 +166,8 @@ class Layout extends Component{
     runProgram(listOfCommands){
         let commandQueue = [];
         listOfCommands.forEach((commandOptions)=>{
-            switch(commandOptions.command){
-                case 'Up':
-                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveUp,commandOptions.distance,commandOptions.speed);
-                    break;
-                case 'Down':
-                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveDown,commandOptions.distance,commandOptions.speed);
-                    break;
-                case 'Left':
-                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveLeft,commandOptions.distance,commandOptions.speed);
-                    break;
-                case 'Right':
-                    this.queueCommands(commandQueue,commandOptions.executionNum,this.moveRight,commandOptions.distance,commandOptions.speed);
-                    break;
-            }
+            const {command, executionNum, distance, speed} = commandOptions;
+            this.queueCommands(commandQueue,executionNum,this[`move${command}`],distance,speed);
         });
 
         // Executes the commands syncroniously
@@ -235,11 +220,12 @@ class Layout extends Component{
     }
 
     render(){
+        const {defaultCommands, showCommandModal, drone} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
-                    defaultCommands={this.state.defaultCommands}
-                    showModal={this.state.showCommandModal}
+                    defaultCommands={defaultCommands}
+                    showModal={showCommandModal}
                     close={this.closeCommandModal}
                     keyBoardListener={this.keyBoardListener}
                     automateDrones={this.automateDrones}
@@ -249,11 +235,10 @@ class Layout extends Component{
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Piece getPosition={this.getPosition} posX={this.state.drone.x} posY={this.state.drone.y}/>
+                    <Piece getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
                 </div>
             </div>
         )
     }
 }
-
 export default Layout;
