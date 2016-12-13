@@ -1,7 +1,7 @@
 import React , {Component,PropTypes} from 'react';
 import './index.scss';
 
-class Piece extends Component{
+class Drone extends Component{
     constructor(props){
         super(props);
     }
@@ -19,10 +19,10 @@ class Piece extends Component{
 
 
 
-Piece.propTypes = {
+Drone.propTypes = {
     getPosition: PropTypes.func.isRequired,
     posX: PropTypes.number.isRequired,
     posY: PropTypes.number.isRequired
 };
 
-export default Piece;
+export default Drone;

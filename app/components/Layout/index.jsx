@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
 import series from 'async/series';
-import {Piece, CommandInputModal} from './components';
+import {Drone, CommandInputModal} from './components';
 import './index.scss';
 
 
@@ -235,7 +235,7 @@ class Layout extends Component{
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Piece getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
+                    <Drone getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
                 </div>
             </div>
         )

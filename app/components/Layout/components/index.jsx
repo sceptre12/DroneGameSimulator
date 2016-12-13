@@ -1,5 +1,5 @@
-import Piece from './Piece';
+import Drone from './Drone';
 import {CommandInputModal} from './Modals';
 
 
-export {Piece, CommandInputModal};
+export {Drone, CommandInputModal};
