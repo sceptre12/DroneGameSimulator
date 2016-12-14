@@ -53,7 +53,6 @@ class Layout extends Component{
                 executionNum: 4
             },
             drone: {
-                element: {},
                 x: 0,
                 y: 0
             },
@@ -67,10 +66,6 @@ class Layout extends Component{
             listOfTimers: []
         }
         this.getPosition = this.getPosition.bind(this);
-        this.moveUp = this.moveUp.bind(this);
-        this.moveLeft = this.moveLeft.bind(this);
-        this.moveDown = this.moveDown.bind(this);
-        this.moveRight = this.moveRight.bind(this);
         this.launchCommandModal = this.launchCommandModal.bind(this);
         this.stop = this.stop.bind(this);
         this.getContainerWidth = this.getContainerWidth.bind(this);
@@ -87,11 +82,9 @@ class Layout extends Component{
     }
 
     getPosition(el,cb){
-        let element = el;
         const {x,y} = this.getElementPos(el);
         this.setState({
             drone: {
-                element,
                 x,
                 y
             }
@@ -118,63 +111,6 @@ class Layout extends Component{
         window.onkeyup = null;
     }
 
-    moveUp(distance,cb){
-        let moveAmount = distance || 10;
-        let topVal = parseInt(window.getComputedStyle(this.state.drone.element).top,10);
-        if(topVal - moveAmount < 0 ) return ;
-        this.state.drone.element.style.top =`${topVal - moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
-    }
-
-    moveLeft(distance,cb){
-        let moveAmount = distance || 10;
-        let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left,10);
-        if(leftVal - moveAmount < 0 ) return ;
-        this.state.drone.element.style.left =`${leftVal - moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
-    }
-
-    moveRight(distance,cb){
-
-        let moveAmount = distance || 10;
-        let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left, 10);
-        let pieceWidth = parseInt(window.getComputedStyle(this.state.drone.element).width,10);
-        if((leftVal + pieceWidth) + moveAmount > this.state.container.width ) return ;
-        this.state.drone.element.style.left =`${leftVal + moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
-    }
-
-    moveDown(distance,cb){
-        const {drone:{element} , container: {height}} = this.state;
-        let moveAmount = distance || 10;
-        let topVal = parseInt(window.getComputedStyle(element).top,10);
-        let pieceHeight = parseInt(window.getComputedStyle(element).height,10);
-        if((topVal + pieceHeight) + moveAmount > height ) return ;
-        element.style.top =`${topVal + moveAmount}px`;
-        this.getPosition(element,cb);
-    }
-
-    queueCommands(queue,executeTimes,action,distance,speed){
-        while(executeTimes > 0){
-            queue.push((cb)=>{
-                let timer = window.setTimeout(action.bind(this,distance,cb),speed);
-            });
-            executeTimes --;
-        }
-    }
-
-    runProgram(listOfCommands){
-        let commandQueue = [];
-        listOfCommands.forEach((commandOptions)=>{
-            const {command, executionNum, distance, speed} = commandOptions;
-            this.queueCommands(commandQueue,executionNum,this[`move${command}`],distance,speed);
-        });
-
-        // Executes the commands syncroniously
-        series(commandQueue, (err,results)=>{
-            console.log(results);
-        });
-    }
 
     automateDrones(CommandList){
 
@@ -220,7 +156,7 @@ class Layout extends Component{
     }
 
     render(){
-        const {defaultCommands, showCommandModal, drone} = this.state;
+        const {defaultCommands, showCommandModal, drone, container} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -235,7 +171,7 @@ class Layout extends Component{
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Drone getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
+                    <Drone parentConstraints={container} getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
                 </div>
             </div>
         )
