@@ -64,7 +64,6 @@ class Layout extends Component{
             currentCommands: [],
             stopAllDrones: false
         }
-        this.getPosition = this.getPosition.bind(this);
         this.launchCommandModal = this.launchCommandModal.bind(this);
         this.stop = this.stop.bind(this);
         this.getContainerWidth = this.getContainerWidth.bind(this);
@@ -74,26 +73,7 @@ class Layout extends Component{
         this.droneFinished = this.droneFinished.bind(this);
     }
 
-    getElementPos(el){
-        return {
-            x: (el.offsetLeft - el.scrollLeft + el.clientLeft),
-            y: (el.offsetTop - el.scrollTop + el.clientTop)
-        }
-    }
 
-    getPosition(el,cb){
-        const {x,y} = this.getElementPos(el);
-        this.setState({
-            drone: {
-                x,
-                y
-            }
-        },(something)=>{
-            if(cb){
-                cb(null,'success');
-            }
-        });
-    }
 
     launchCommandModal(){
         this.setState({
@@ -115,15 +95,11 @@ class Layout extends Component{
 
 
     automateDrones(CommandList){
-
         console.log(CommandList);
         this.setState({
             currentCommands: CommandList,
             showCommandModal: false
         });
-        
-        // TODO Insert Coundown Overlay code
-
     }
 
     keyBoardListener(){
@@ -156,10 +132,10 @@ class Layout extends Component{
             }
         });
     }
-    
+
     droneFinished(drone){
         const {currentCommands, commandHistory} = this.state;
-        
+
         this.setState({
             commandHistory: commandHistory.concat(currentCommands),
             currentCommands: []
@@ -182,11 +158,11 @@ class Layout extends Component{
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Drone 
-                        currentCommands={currentCommands} 
-                        parentConstraints={container} 
-                        posX={drone.x} 
-                        posY={drone.y}
+                    <Drone
+                        currentCommands={currentCommands}
+                        parentConstraints={container}
+                        x={drone.x}
+                        y={drone.y}
                         droneFinished={this.droneFinished}
                         stop={stopAllDrones}
                         />

@@ -24,6 +24,7 @@ class CommandInputModal extends Component{
         this.setExecutionNum = this.setExecutionNum.bind(this);
         this.setDistance = this.setDistance.bind(this);
         this.start = this.start.bind(this);
+        this.populateCommandOptionListFromFile = this.populateCommandOptionListFromFile.bind(this);
     }
 
     addCommands(){
@@ -102,15 +103,38 @@ class CommandInputModal extends Component{
         });
     }
 
+    populateCommandOptionListFromFile(data){
+        this.setState({
+            CommandOptionList: data.filter((a)=>{
+                if(Object.keys(a).length !== 5){
+                    return false;
+                }
+                return true;
+            }).map((instructions)=>{
+                const {listOfCommands, listOfDistance ,listOfExecutionNum, listOfSpeeds} = this.state.CommandOptionList[0];
+                const {command,speed,distance,drone,executionNum} = instructions;
+                return {
+                    listOfCommands,
+                    listOfDistance,
+                    listOfExecutionNum,
+                    listOfSpeeds,
+                    command,
+                    speed: parseInt(speed,10),
+                    distance: parseInt(distance, 10),
+                    drone: parseInt(drone,10),
+                    executionNum: parseInt(executionNum,10)
+                }
+            })
+        })
+    }
+
     fileUpload(acceptedFiles, rejectedFiles) {
-        // TODO Create the method from the layout that will be called in here
-        // its supposed to take this json data and create commands inside of the application
         if(!rejectedFiles.length){
             papaParse.parse(acceptedFiles[0],{
                 delimiter: ',',
                 header: true,
                 complete:(results)=>{
-                    console.log(results)
+                    this.populateCommandOptionListFromFile(results.data);
                 }
             })
         }else{
@@ -132,7 +156,7 @@ class CommandInputModal extends Component{
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Dropzone onDrop={this.fileUpload} className="dropZone" >
+                    <Dropzone onDrop={this.fileUpload.bind(this)} className="dropZone" >
                         <button type="button" className="btn btn-primary">Upload Commands (Csv Only)</button>
                     </Dropzone>
                     <hr/>

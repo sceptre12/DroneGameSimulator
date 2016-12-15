@@ -11,10 +11,10 @@ class Drone extends Component{
 
 
     init(){
-        const {posX,posY} = this.props;
+        const {x,y} = this.props;
         this.state={
-            x: posX,
-            y: posY
+            x,
+            y
         }
         // react state animation wrapper
         this._animate = new ReactStateAnimation(this);
@@ -24,32 +24,40 @@ class Drone extends Component{
         this.moveRight = this.moveRight.bind(this);
         this.moveLeft = this.moveLeft.bind(this);
         this.runDroneProgram = this.runDroneProgram.bind(this);
-    }
-
-
-    start() {
-        // start animation
-        this._animate.linearInOut('x', 350/*end value*/, 1000/*duration(ms)*/);
-
+        this.xConstraints = this.xConstraints.bind(this);
+        this.yConstraints = this.yConstraints.bind(this);
     }
 
     stop() {
         this._animate.stop()
     }
 
-    componentDidMount(){
-        this.start();
-    }
-    
     componentWillReceiveProps(nextProps){
-        console.log(nextProps);
         if(nextProps.currentCommands.length){
             this.runDroneProgram(nextProps.currentCommands);
+        }
+        if(nextProps.stop){
+            this.stop();
+        }
+    }
+
+    xConstraints(distance){
+        var output = this.state.x - distance;
+        if(output < 0 || output > this.props.parentConstraints.width ){
+            cb(null,true);
+        }
+    }
+
+    yConstraints(distance){
+        var output = this.state.y - distance;
+        if(output < 0 || output > this.props.parentConstraints.height ){
+            cb(null,true);
         }
     }
 
     moveUp(distance,speed,cb){
-        this._animate.linearInOut('y', this.state.x - distance, speed).then(()=>{
+        this.yConstraints(distance);
+        this._animate.linearInOut('y', this.state.y - distance, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
              }else{
@@ -61,6 +69,7 @@ class Drone extends Component{
     }
 
     moveLeft(distance,speed,cb){
+        this.xConstraints(distance);
         this._animate.linearInOut('x', this.state.x - distance, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
@@ -144,8 +153,8 @@ class Drone extends Component{
 
 Drone.propTypes = {
     currentCommands: PropTypes.array.isRequired,
-    posX: PropTypes.number.isRequired,
-    posY: PropTypes.number.isRequired,
+    x: PropTypes.number.isRequired,
+    y: PropTypes.number.isRequired,
     parentConstraints: PropTypes.object.isRequired,
     droneFinished: PropTypes.func.isRequired,
     stop: PropTypes.bool.isRequired
