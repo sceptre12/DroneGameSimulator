@@ -1,5 +1,6 @@
 import React , {Component,PropTypes} from 'react';
-import ReactStateAnimation from 'react-state-animation'
+import ReactStateAnimation from 'react-state-animation';
+import series from 'async/series';
 import './index.scss';
 
 class Drone extends Component{
@@ -18,6 +19,11 @@ class Drone extends Component{
         // react state animation wrapper
         this._animate = new ReactStateAnimation(this);
         this.getStyle = this.getStyle.bind(this);
+        this.moveUp = this.moveUp.bind(this);
+        this.moveDown = this.moveDown.bind(this);
+        this.moveRight = this.moveRight.bind(this);
+        this.moveLeft = this.moveLeft.bind(this);
+        this.runDroneProgram = this.runDroneProgram.bind(this);
     }
 
 
@@ -34,47 +40,68 @@ class Drone extends Component{
     componentDidMount(){
         this.start();
     }
-
-    moveUp(distance,cb){
-        let moveAmount = distance || 10;
-        let topVal = parseInt(window.getComputedStyle(this.state.drone.element).top,10);
-        if(topVal - moveAmount < 0 ) return ;
-        this.state.drone.element.style.top =`${topVal - moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
+    
+    componentWillReceiveProps(nextProps){
+        console.log(nextProps);
+        if(nextProps.currentCommands.length){
+            this.runDroneProgram(nextProps.currentCommands);
+        }
     }
 
-    moveLeft(distance,cb){
-        let moveAmount = distance || 10;
-        let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left,10);
-        if(leftVal - moveAmount < 0 ) return ;
-        this.state.drone.element.style.left =`${leftVal - moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
+    moveUp(distance,speed,cb){
+        this._animate.linearInOut('y', this.state.x - distance, speed).then(()=>{
+             if(this.props.stop){
+                 cb("Instructions Halted",null);
+             }else{
+                 cb(null,true);
+             }
+         }, (err)=>{
+             cb(err,null);
+         })
     }
 
-    moveRight(distance,cb){
-
-        let moveAmount = distance || 10;
-        let leftVal = parseInt(window.getComputedStyle(this.state.drone.element).left, 10);
-        let pieceWidth = parseInt(window.getComputedStyle(this.state.drone.element).width,10);
-        if((leftVal + pieceWidth) + moveAmount > this.state.container.width ) return ;
-        this.state.drone.element.style.left =`${leftVal + moveAmount}px`;
-        this.getPosition(this.state.drone.element,cb);
+    moveLeft(distance,speed,cb){
+        this._animate.linearInOut('x', this.state.x - distance, speed).then(()=>{
+             if(this.props.stop){
+                 cb("Instructions Halted",null);
+             }else{
+                 cb(null,true);
+             }
+         }, (err)=>{
+             cb(err,null);
+         })
     }
 
-    moveDown(distance,cb){
-        const {drone:{element} , container: {height}} = this.state;
-        let moveAmount = distance || 10;
-        let topVal = parseInt(window.getComputedStyle(element).top,10);
-        let pieceHeight = parseInt(window.getComputedStyle(element).height,10);
-        if((topVal + pieceHeight) + moveAmount > height ) return ;
-        element.style.top =`${topVal + moveAmount}px`;
-        this.getPosition(element,cb);
+    moveRight(distance,speed,cb){
+        this._animate.linearInOut('x', this.state.x + distance, speed).then(()=>{
+             if(this.props.stop){
+                 cb("Instructions Halted",null);
+             }else{
+                 cb(null,true);
+             }
+         }, (err)=>{
+             cb(err,null);
+         })
+    }
+
+    moveDown(distance,speed,cb){
+         this._animate.linearInOut('y', this.state.y + distance, speed).then(()=>{
+             if(this.props.stop){
+                 cb("Instructions Halted",null);
+             }else{
+                 cb(null,true);
+             }
+         }, (err)=>{
+             cb(err,null);
+         })
     }
 
 
     getStyle() {
+        const {x,y} = this.state;
         return {
-            left: this.state.x + "px",
+            top: `${y}px`,
+            left: `${x}px`,
             width: 50,
             height: 50
         }
@@ -83,13 +110,13 @@ class Drone extends Component{
     queueCommands(queue,executeTimes,action,distance,speed){
         while(executeTimes > 0){
             queue.push((cb)=>{
-                let timer = window.setTimeout(action.bind(this,distance,cb),speed);
+                action(distance,speed,cb);
             });
             executeTimes --;
         }
     }
 
-    runProgram(listOfCommands){
+    runDroneProgram(listOfCommands){
         let commandQueue = [];
         listOfCommands.forEach((commandOptions)=>{
             const {command, executionNum, distance, speed} = commandOptions;
@@ -98,7 +125,7 @@ class Drone extends Component{
 
         // Executes the commands syncroniously
         series(commandQueue, (err,results)=>{
-            console.log(results);
+            this.props.droneFinished();
         });
     }
 
@@ -116,10 +143,12 @@ class Drone extends Component{
 
 
 Drone.propTypes = {
-    getPosition: PropTypes.func.isRequired,
+    currentCommands: PropTypes.array.isRequired,
     posX: PropTypes.number.isRequired,
     posY: PropTypes.number.isRequired,
-    parentConstraints: PropTypes.object.isRequired
+    parentConstraints: PropTypes.object.isRequired,
+    droneFinished: PropTypes.func.isRequired,
+    stop: PropTypes.bool.isRequired
 };
 
 export default Drone;

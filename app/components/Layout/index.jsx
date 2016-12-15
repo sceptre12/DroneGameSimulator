@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
-import series from 'async/series';
 import {Drone, CommandInputModal} from './components';
 import './index.scss';
 
@@ -63,7 +62,7 @@ class Layout extends Component{
             showCommandModal: false,
             commandHistory: [],
             currentCommands: [],
-            listOfTimers: []
+            stopAllDrones: false
         }
         this.getPosition = this.getPosition.bind(this);
         this.launchCommandModal = this.launchCommandModal.bind(this);
@@ -72,6 +71,7 @@ class Layout extends Component{
         this.closeCommandModal = this.closeCommandModal.bind(this);
         this.keyBoardListener = this.keyBoardListener.bind(this);
         this.automateDrones = this.automateDrones.bind(this);
+        this.droneFinished = this.droneFinished.bind(this);
     }
 
     getElementPos(el){
@@ -108,7 +108,9 @@ class Layout extends Component{
     }
 
     stop(){
-        window.onkeyup = null;
+        this.setState({
+            stopAllDrones: true
+        });
     }
 
 
@@ -119,7 +121,7 @@ class Layout extends Component{
             currentCommands: CommandList,
             showCommandModal: false
         });
-        this.runProgram(CommandList);
+        
         // TODO Insert Coundown Overlay code
 
     }
@@ -154,9 +156,18 @@ class Layout extends Component{
             }
         });
     }
+    
+    droneFinished(drone){
+        const {currentCommands, commandHistory} = this.state;
+        
+        this.setState({
+            commandHistory: commandHistory.concat(currentCommands),
+            currentCommands: []
+        });
+    }
 
     render(){
-        const {defaultCommands, showCommandModal, drone, container} = this.state;
+        const {defaultCommands, showCommandModal, drone, container , currentCommands, stopAllDrones} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -171,7 +182,14 @@ class Layout extends Component{
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Drone parentConstraints={container} getPosition={this.getPosition} posX={drone.x} posY={drone.y}/>
+                    <Drone 
+                        currentCommands={currentCommands} 
+                        parentConstraints={container} 
+                        posX={drone.x} 
+                        posY={drone.y}
+                        droneFinished={this.droneFinished}
+                        stop={stopAllDrones}
+                        />
                 </div>
             </div>
         )
