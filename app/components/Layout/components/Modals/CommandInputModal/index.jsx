@@ -122,7 +122,8 @@ class CommandInputModal extends Component{
                     speed: parseInt(speed,10),
                     distance: parseInt(distance, 10),
                     drone: parseInt(drone,10),
-                    executionNum: parseInt(executionNum,10)
+                    executionNum: parseInt(executionNum,10),
+                    crash: false
                 }
             })
         })

@@ -42,24 +42,25 @@ class Drone extends Component{
     }
 
     xConstraints(distance,cb){
-        var output = this.state.x - distance;
-        if(output < 0 || output > this.props.parentConstraints.width ){
+        if(distance < 0 || distance > this.props.parentConstraints.width ){
             cb(null,true);
             return true;
         }
+        return false;
     }
 
     yConstraints(distance,cb){
-        var output = this.state.y - distance;
-        if(output < 0 || output > this.props.parentConstraints.height ){
+        if(distance < 0 || distance > this.props.parentConstraints.height ){
             cb(null,true);
             return true;
         }
+        return false;
     }
 
     moveUp(distance,speed,cb){
-        this.yConstraints(distance,cb);
-        this._animate.linearInOut('y', this.state.y - distance, speed).then(()=>{
+        var output = this.state.y - distance;
+        if(!this.yConstraints(output,cb)){
+           this._animate.linearInOut('y', output, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
              }else{
@@ -67,12 +68,14 @@ class Drone extends Component{
              }
          }, (err)=>{
              cb(err,null);
-         })
+         }); 
+        }
     }
 
     moveLeft(distance,speed,cb){
-        this.xConstraints(distance,cb);
-        this._animate.linearInOut('x', this.state.x - distance, speed).then(()=>{
+        var output = this.state.x - distance;
+        if(!this.xConstraints(output,cb)){
+          this._animate.linearInOut('x', output, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
              }else{
@@ -80,12 +83,14 @@ class Drone extends Component{
              }
          }, (err)=>{
              cb(err,null);
-         })
+         });  
+        }
     }
 
     moveRight(distance,speed,cb){
-        this.xConstraints(distance,cb);
-        this._animate.linearInOut('x', this.state.x + distance, speed).then(()=>{
+        var output = this.state.x + distance;
+        if(!this.xConstraints(output,cb)){
+           this._animate.linearInOut('x', output, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
              }else{
@@ -93,12 +98,14 @@ class Drone extends Component{
              }
          }, (err)=>{
              cb(err,null);
-         })
+         }); 
+        }
     }
 
     moveDown(distance,speed,cb){
-        this.yConstraints(distance,cb);
-         this._animate.linearInOut('y', this.state.y + distance, speed).then(()=>{
+        var output = this.state.y + distance;
+        if(!this.yConstraints(output,cb)){
+           this._animate.linearInOut('y',output, speed).then(()=>{
              if(this.props.stop){
                  cb("Instructions Halted",null);
              }else{
@@ -106,7 +113,8 @@ class Drone extends Component{
              }
          }, (err)=>{
              cb(err,null);
-         })
+         }); 
+        }
     }
 
 

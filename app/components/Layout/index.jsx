@@ -49,7 +49,8 @@ class Layout extends Component{
                 command: 'Up',
                 speed: 1000,
                 distance: 50,
-                executionNum: 4
+                executionNum: 4,
+                crashed: false
             },
             drone: {
                 x: 0,
@@ -139,7 +140,10 @@ class Layout extends Component{
         this.setState({
             commandHistory: commandHistory.concat(currentCommands),
             currentCommands: []
+        },(cb)=>{
+            console.log(this.state.commandHistory)
         });
+        
     }
 
     render(){
