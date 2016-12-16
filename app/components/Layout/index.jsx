@@ -72,6 +72,8 @@ class Layout extends Component{
         this.keyBoardListener = this.keyBoardListener.bind(this);
         this.automateDrones = this.automateDrones.bind(this);
         this.droneFinished = this.droneFinished.bind(this);
+        this.removeDrone = this.removeDrone.bind(this);
+        this.getDroneInfo = this.getDroneInfo.bind(this);
     }
 
 
@@ -96,7 +98,6 @@ class Layout extends Component{
 
 
     automateDrones(CommandList){
-        console.log(CommandList);
         this.setState({
             currentCommands: CommandList,
             showCommandModal: false
@@ -134,16 +135,28 @@ class Layout extends Component{
         });
     }
 
-    droneFinished(drone){
+    droneFinished(droneResults){
         const {currentCommands, commandHistory} = this.state;
 
         this.setState({
-            commandHistory: commandHistory.concat(currentCommands),
+            commandHistory: commandHistory.concat([{
+                currentCommands,
+                results: {
+                    droneResults
+                }
+            }]),
             currentCommands: []
         },(cb)=>{
             console.log(this.state.commandHistory)
         });
-        
+    }
+
+    getDroneInfo(droneId){
+
+    }
+
+    removeDrone(droneId){
+
     }
 
     render(){
@@ -158,8 +171,9 @@ class Layout extends Component{
                     automateDrones={this.automateDrones}
                     />
                 <div className="btn-group" role="group" aria-label="...">
-                  <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Start</button>
-                  <button type="button" className="btn btn-danger" onClick={this.stop}>Stop</button>
+                  <button type="button" className="btn btn-success" onClick={this.stop}>Add Drone</button>
+                  <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Launch Commands</button>
+                  <button type="button" className="btn btn-danger" onClick={this.stop}>Stop All Drone Actions</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
                     <Drone
@@ -169,6 +183,7 @@ class Layout extends Component{
                         y={drone.y}
                         droneFinished={this.droneFinished}
                         stop={stopAllDrones}
+                        onClick={this.getDroneInfo}
                         />
                 </div>
             </div>
