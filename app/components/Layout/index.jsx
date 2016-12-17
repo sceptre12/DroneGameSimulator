@@ -50,15 +50,22 @@ class Layout extends Component{
                 speed: 1000,
                 distance: 50,
                 executionNum: 4,
-                crashed: false
+                crashed: false,
+                droneId: 0
             },
-            drone: {
-                x: 0,
-                y: 0
-            },
+            droneList: [
+                {
+                    x: 0,
+                    y: 0
+                }
+            ],
             container:{
                 height: 0,
                 width: 0
+            },
+            droneAttributes: {
+                width: 100,
+                height: 100
             },
             showCommandModal: false,
             commandHistory: [],
@@ -74,6 +81,7 @@ class Layout extends Component{
         this.droneFinished = this.droneFinished.bind(this);
         this.removeDrone = this.removeDrone.bind(this);
         this.getDroneInfo = this.getDroneInfo.bind(this);
+        this.addDrone = this.addDrone.bind(this);
     }
 
 
@@ -142,7 +150,8 @@ class Layout extends Component{
             commandHistory: commandHistory.concat([{
                 currentCommands,
                 results: {
-                    droneResults
+                    droneResults,
+                    date: new Date()
                 }
             }]),
             currentCommands: []
@@ -151,40 +160,73 @@ class Layout extends Component{
         });
     }
 
+    addDrone(){
+        const {droneList, droneAttributes:{width}} = this.state;
+        this.setState({
+            droneList: droneList.concat({
+                x: 0,
+                y: 0
+            }).reduce((accumulator,droneObj,currentIndex)=>{
+                if(!accumulator.length){
+                    accumulator.push(droneObj);
+                }else{
+                    let {x} = accumulator[currentIndex - 1];
+                    accumulator.push({
+                        x: x + width,
+                        y: 0
+                    })
+                }
+                return accumulator;
+            },[])
+        })
+    }
+
+    // TODO
     getDroneInfo(droneId){
 
     }
 
+    // TODO
     removeDrone(droneId){
 
     }
 
     render(){
-        const {defaultCommands, showCommandModal, drone, container , currentCommands, stopAllDrones} = this.state;
+        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
                     defaultCommands={defaultCommands}
+                    droneListLength={droneList.length}
                     showModal={showCommandModal}
                     close={this.closeCommandModal}
                     keyBoardListener={this.keyBoardListener}
                     automateDrones={this.automateDrones}
                     />
                 <div className="btn-group" role="group" aria-label="...">
-                  <button type="button" className="btn btn-success" onClick={this.stop}>Add Drone</button>
+                  <button type="button" className="btn btn-success" onClick={this.addDrone}>Add Drone</button>
                   <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Launch Commands</button>
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop All Drone Actions</button>
                 </div>
                 <div id="playground" ref={this.getContainerWidth}>
-                    <Drone
-                        currentCommands={currentCommands}
-                        parentConstraints={container}
-                        x={drone.x}
-                        y={drone.y}
-                        droneFinished={this.droneFinished}
-                        stop={stopAllDrones}
-                        onClick={this.getDroneInfo}
-                        />
+                    {
+                        this.state.droneList.map((drone,index)=>{
+                            return (
+                                <Drone
+                                    key={index}
+                                    id={index}
+                                    droneAttributes={droneAttributes}
+                                    currentCommands={currentCommands}
+                                    parentConstraints={container}
+                                    x={drone.x}
+                                    y={drone.y}
+                                    droneFinished={this.droneFinished}
+                                    stop={stopAllDrones}
+                                    onClick={this.getDroneInfo}
+                                    />
+                            )
+                        })
+                    }
                 </div>
             </div>
         )

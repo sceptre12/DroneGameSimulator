@@ -23,8 +23,10 @@ class CommandInputModal extends Component{
         this.setSpeed = this.setSpeed.bind(this);
         this.setExecutionNum = this.setExecutionNum.bind(this);
         this.setDistance = this.setDistance.bind(this);
+        this.setDroneId = this.setDroneId.bind(this);
         this.start = this.start.bind(this);
         this.populateCommandOptionListFromFile = this.populateCommandOptionListFromFile.bind(this);
+        this.createDroneId = this.createDroneId.bind(this);
     }
 
     addCommands(){
@@ -36,10 +38,9 @@ class CommandInputModal extends Component{
     removeCommand(index,event){
         this.setState({
             CommandOptionList: this.state.CommandOptionList.filter((item,pos)=>{
-
                 return index !== pos;
             })
-        })
+        });
     }
 
     setDistance(index,event){
@@ -55,6 +56,28 @@ class CommandInputModal extends Component{
                 return options;
             })
         });
+    }
+
+    createDroneId(){
+        let droneId = [];
+        var counter = 0;
+        while(counter < this.props.droneListLength){
+            droneId.push(counter);
+            counter ++;
+        }
+        return droneId;
+    }
+
+    setDroneId(index,event){
+        this.setState({
+            CommandOptionList: this.state.CommandOptionList.map((options,pos)=>{
+                if(index === pos){
+                    options.droneId = parseInt(event.target.value,10);
+                    return options;
+                }
+                return options;
+            })
+        })
     }
 
     setCommand(index,event){
@@ -78,7 +101,7 @@ class CommandInputModal extends Component{
                 }
                 return options;
             })
-        })
+        });
     }
 
     setExecutionNum(index,event){
@@ -93,7 +116,7 @@ class CommandInputModal extends Component{
                 }
                 return options;
             })
-        })
+        });
     }
 
     start(){
@@ -112,7 +135,7 @@ class CommandInputModal extends Component{
                 return true;
             }).map((instructions)=>{
                 const {listOfCommands, listOfDistance ,listOfExecutionNum, listOfSpeeds} = this.state.CommandOptionList[0];
-                const {command,speed,distance,drone,executionNum} = instructions;
+                const {command,speed,distance,droneId,executionNum} = instructions;
                 return {
                     listOfCommands,
                     listOfDistance,
@@ -121,12 +144,12 @@ class CommandInputModal extends Component{
                     command,
                     speed: parseInt(speed,10),
                     distance: parseInt(distance, 10),
-                    drone: parseInt(drone,10),
+                    droneId: parseInt(droneId,10),
                     executionNum: parseInt(executionNum,10),
-                    crash: false
+                    crashed: false
                 }
             })
-        })
+        });
     }
 
     fileUpload(acceptedFiles, rejectedFiles) {
@@ -137,7 +160,7 @@ class CommandInputModal extends Component{
                 complete:(results)=>{
                     this.populateCommandOptionListFromFile(results.data);
                 }
-            })
+            });
         }else{
             console.log('File has been rejected');
         }
@@ -188,24 +211,28 @@ class CommandInputModal extends Component{
                         <tbody>
                             {
                                 this.state.CommandOptionList.map((option,index)=>{
+                                    const {command, speed,distance, executionNum, listOfSpeeds,listOfDistance,listOfCommands, listOfExecutionNum, droneId} = option;
                                     return (
                                         <CommandOption
                                             key={index}
                                             index={index}
-                                            command={option.command}
-                                            speed={option.speed}
-                                            distance={option.distance}
-                                            listOfDistance={option.listOfDistance}
+                                            command={command}
+                                            speed={speed}
+                                            distance={distance}
+                                            droneId={droneId}
+                                            droneIdList={this.createDroneId}
+                                            listOfDistance={listOfDistance}
                                             lengthOfCommandOptionList={this.state.CommandOptionList.length}
-                                            listOfCommands={option.listOfCommands}
-                                            listOfExecutionNum={option.listOfExecutionNum}
-                                            executionNum={option.executionNum}
-                                            listOfSpeeds={option.listOfSpeeds}
+                                            listOfCommands={listOfCommands}
+                                            listOfExecutionNum={listOfExecutionNum}
+                                            executionNum={executionNum}
+                                            listOfSpeeds={listOfSpeeds}
                                             removeCommand={this.removeCommand}
                                             setCommand={this.setCommand}
                                             setSpeed={this.setSpeed}
                                             setExecutionNum={this.setExecutionNum}
                                             setDistance={this.setDistance}
+                                            setDroneId={this.setDroneId}
                                              />
                                     )
                                 })
@@ -236,7 +263,8 @@ CommandInputModal.propTypes = {
     keyBoardListener: PropTypes.func.isRequired,
     close: PropTypes.func.isRequired,
     automateDrones: PropTypes.func.isRequired,
-    defaultCommands: PropTypes.object.isRequired
+    defaultCommands: PropTypes.object.isRequired,
+    droneListLength: PropTypes.number.isRequired
 }
 
 export default CommandInputModal;

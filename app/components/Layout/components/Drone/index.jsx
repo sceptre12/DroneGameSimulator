@@ -68,16 +68,19 @@ class Drone extends Component{
     }
 
     logCrash(commandIndex,type,distance,axis){
+        const {droneId} = this.props;
         let crashOccurrence = {};
         if(axis.x){
             crashOccurrence = {
                 x: distance,
-                y: this.state.y
+                y: this.state.y,
+                droneId
             }
         }else if (axis.y){
             crashOccurrence = {
                 x: this.state.x,
-                y: distance
+                y: distance,
+                droneId
             }
         }
         crashOccurrence.type = type;
@@ -148,20 +151,24 @@ class Drone extends Component{
 
     getStyle() {
         const {x,y} = this.state;
+        const {droneAttributes:{width, height}} = this.props
         return {
             top: `${y}px`,
             left: `${x}px`,
-            width: 50,
-            height: 50
+            width: width,
+            height: height
         }
     }
 
     queueCommands(command,functionQueue,executeTimes,action,distance,speed){
+        const {droneId} = this.props;
         while(executeTimes > 0){
             let commandIndex = this.commandQueue.push({
                 distance,
                 speed,
-                command
+                command,
+                crashed: false,
+                droneId
             });
             functionQueue.push((cb)=>{
                 action(distance,speed,cb,commandIndex - 1);
@@ -173,7 +180,8 @@ class Drone extends Component{
     runDroneProgram(listOfCommands){
         let commandFunctionQueue = [];
         listOfCommands.forEach((commandOptions)=>{
-            const {command, executionNum, distance, speed} = commandOptions;
+            const {command, executionNum, distance, speed, droneId} = commandOptions;
+            if(droneId !== this.props.id) return;
             this.queueCommands(command,commandFunctionQueue,executionNum,this[`move${command}`],distance,speed);
         });
 
@@ -188,6 +196,7 @@ class Drone extends Component{
         const {posX,posY, getPosition} = this.props;
         return (
                 <div className="drone" style={this.getStyle()} ref={getPosition}>
+                    <p>ID:{this.props.id}</p>
                     <p>X:{parseInt(this.state.x,10)}</p>
                     <p>Y:{parseInt(this.state.y,10)}</p>
                 </div>
@@ -199,11 +208,13 @@ class Drone extends Component{
 
 Drone.propTypes = {
     currentCommands: PropTypes.array.isRequired,
+    id: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,
     parentConstraints: PropTypes.object.isRequired,
     droneFinished: PropTypes.func.isRequired,
-    stop: PropTypes.bool.isRequired
+    stop: PropTypes.bool.isRequired,
+    droneAttributes: PropTypes.object.isRequired
 };
 
 export default Drone;

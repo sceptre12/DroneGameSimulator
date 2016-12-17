@@ -2,7 +2,7 @@ import React, {PropTypes} from 'react';
 import {Button,FormGroup, FormControl, FieldGroup} from 'react-bootstrap';
 
 const CommandOption = ({listOfCommands, executionNum, listOfExecutionNum, listOfSpeeds,lengthOfCommandOptionList,
-    index, removeCommand, setCommand,setSpeed,setExecutionNum, setDistance, distance, listOfDistance, command, speed}) => {
+    index, removeCommand, setCommand,setSpeed,setExecutionNum, setDistance, setDroneId, distance, listOfDistance, droneId ,command, speed, droneIdList}) => {
 
     return(
         <tr>
@@ -82,7 +82,22 @@ const CommandOption = ({listOfCommands, executionNum, listOfExecutionNum, listOf
                 </FormGroup>
             </td>
             <td>
-                1
+                <FormGroup controlId="droneIdList">
+                    <FormControl componentClass="select" placeholder="select" value={droneId} onChange={setDroneId.bind(this,index)}>
+                        {
+                            droneIdList().map((id,index)=>{
+                                return (
+                                    <option
+                                        key={index}
+                                        value={`${id}`}
+                                        >
+                                        {id}
+                                    </option>
+                                )
+                            })
+                        }
+                    </FormControl>
+                </FormGroup>
             </td>
             <td>
                 { lengthOfCommandOptionList === 1? '' : <Button onClick={removeCommand.bind(this,index)}>Delete</Button>}
@@ -103,10 +118,13 @@ CommandOption.propTypes = {
     setSpeed: PropTypes.func.isRequired,
     setExecutionNum: PropTypes.func.isRequired,
     setDistance: PropTypes.func.isRequired,
+    setDroneId: PropTypes.func.isRequired,
     distance: PropTypes.number.isRequired,
     listOfDistance: PropTypes.array.isRequired,
+    droneId: PropTypes.number.isRequired,
     command: PropTypes.string.isRequired,
-    speed: PropTypes.number.isRequired
+    speed: PropTypes.number.isRequired,
+    droneIdList: PropTypes.func.isRequired
 }
 
 export default CommandOption;
