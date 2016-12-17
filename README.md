@@ -6,9 +6,9 @@ this program to be able to understand the complexities one would face when tryin
 
 ##Plan Of Action
 - Create the interface and layout for the project (Current Stage)
-- Create a Command Controller (basically an input area where you can enter commands to control each drone) (Current Stage).
-- Give the user the ability to create more drones (Next Stage)
-- Create the run automation script (the code that executes the command that was given by the user) (Next Stage).
+- Create a Command Controller (basically an input area where you can enter commands to control each drone) (Done).
+- Give the user the ability to create more drones (Done)
+- Create the run automation script (the code that executes the command that was given by the user) (Done).
 - Create an algorithm that will allow the drones to learn from their mistakes and improve their positions so that on each
     run the drone is capable of taking a better route to reach its destination (Next Stage).
 - Create a graph displaying all of the drones command paths (Next Stage).
