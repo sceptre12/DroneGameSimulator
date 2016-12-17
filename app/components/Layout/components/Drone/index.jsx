@@ -33,6 +33,7 @@ class Drone extends Component{
         this.yConstraints = this.yConstraints.bind(this);
         this.queueCommands = this.queueCommands.bind(this);
         this.logCrash = this.logCrash.bind(this);
+        this.checkIfCrashingIntoOtherDrone = this.checkIfCrashingIntoOtherDrone.bind(this);
     }
 
     stop() {
@@ -49,23 +50,67 @@ class Drone extends Component{
     }
 
     xConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.width ){
+        if(distance < 0 || distance > this.props.parentConstraints.width || this.checkIfCrashingIntoOtherDrone()){
             this.logCrash(commandIndex,"containerCrash",distance,{x: true});
             cb(null,true);
             return true;
         }
         return false;
-
     }
 
     yConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.height ){
+        if(distance < 0 || distance > this.props.parentConstraints.height || this.checkIfCrashingIntoOtherDrone() ){
             this.logCrash(commandIndex,"containerCrash",distance,{y: true});
             cb(null,true);
             return true;
         }
         return false;
     }
+
+    checkIfCrashingIntoOtherDrone(){
+        debugger
+        const {droneId,allDroneCoordinates} = this.props;
+        let getAllDroneCoordinates = allDroneCoordinates();
+        const {topLeft,topRight,bottomLeft,bottomRight} = getAllDroneCoordinates[droneId];
+        var crashed = false;
+
+        getAllDroneCoordinates.forEach((drone,index)=>{
+            if(index !== droneId){
+                crashed = detectIfWithinAnotherDroneBoundaries(drone);
+            }
+        });
+
+        console.log('creasheee',crashed)
+
+        return crashed;
+
+        function detectIfWithinAnotherDroneBoundaries(drone){
+
+            let topLY = drone.topLeft.y;
+            let topRY = drone.topRight.y;
+            let topLX = drone.topLeft.x;
+            let topRX = drone.topRight.x;
+            let botLY = drone.bottomLeft.y;
+            let botRY = drone.bottomRight.y;
+            let botLX = drone.bottomLeft.x;
+            let botRX = drone.bottomRight.x;
+
+
+
+            // 1st case: drone is moving down into another drone
+            // side affect: handles drone moving left and right into another drone
+            return(between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX)) ||
+            // 2nd case: drone is moving up into another drone
+            // side affect: handles drone moving left and right into another drone
+            (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX))
+        }
+
+        function between(val,min,max){
+            return val >= min && val <= max;
+        }
+    }
+
+
 
     logCrash(commandIndex,type,distance,axis){
         const {droneId} = this.props;
@@ -181,7 +226,7 @@ class Drone extends Component{
         let commandFunctionQueue = [];
         listOfCommands.forEach((commandOptions)=>{
             const {command, executionNum, distance, speed, droneId} = commandOptions;
-            if(droneId !== this.props.id) return;
+            if(droneId !== this.props.droneId) return;
             this.queueCommands(command,commandFunctionQueue,executionNum,this[`move${command}`],distance,speed);
         });
 
@@ -196,7 +241,7 @@ class Drone extends Component{
         const {posX,posY, getPosition} = this.props;
         return (
                 <div className="drone" style={this.getStyle()} ref={getPosition}>
-                    <p>ID:{this.props.id}</p>
+                    <p>ID:{this.props.droneId}</p>
                     <p>X:{parseInt(this.state.x,10)}</p>
                     <p>Y:{parseInt(this.state.y,10)}</p>
                 </div>
@@ -208,13 +253,14 @@ class Drone extends Component{
 
 Drone.propTypes = {
     currentCommands: PropTypes.array.isRequired,
-    id: PropTypes.number.isRequired,
+    droneId: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,
     parentConstraints: PropTypes.object.isRequired,
     droneFinished: PropTypes.func.isRequired,
     stop: PropTypes.bool.isRequired,
-    droneAttributes: PropTypes.object.isRequired
+    droneAttributes: PropTypes.object.isRequired,
+    allDroneCoordinates: PropTypes.func.isRequired
 };
 
 export default Drone;

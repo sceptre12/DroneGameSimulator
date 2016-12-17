@@ -56,7 +56,8 @@ class Layout extends Component{
             droneList: [
                 {
                     x: 0,
-                    y: 0
+                    y: 0,
+                    element: {}
                 }
             ],
             container:{
@@ -82,6 +83,7 @@ class Layout extends Component{
         this.removeDrone = this.removeDrone.bind(this);
         this.getDroneInfo = this.getDroneInfo.bind(this);
         this.addDrone = this.addDrone.bind(this);
+        this.getAllDroneCoordinates = this.getAllDroneCoordinates.bind(this);
     }
 
 
@@ -172,12 +174,45 @@ class Layout extends Component{
                 }else{
                     let {x} = accumulator[currentIndex - 1];
                     accumulator.push({
-                        x: x + width,
+                        x: x + width + 10,
                         y: 0
                     })
                 }
                 return accumulator;
             },[])
+        })
+    }
+
+
+    getAllDroneCoordinates(){
+        const {droneAttributes:{width,height}} = this.state;
+
+        // returns list of droneId's
+        let droneRefs = Object.keys(this.refs).filter((key)=>{
+            if(key.includes('drone')) return true;
+            return false;
+        });
+
+        return droneRefs.map((droneKey)=>{
+            const {state:{x,y}} = this.refs[droneKey];
+            return {
+                topLeft: {
+                    x,
+                    y
+                },
+                topRight: {
+                    x: x + width,
+                    y
+                },
+                bottomLeft: {
+                    x,
+                    y: y + height
+                },
+                bottomRight: {
+                    x: x + width,
+                    y: y + height
+                }
+            }
         })
     }
 
@@ -214,12 +249,14 @@ class Layout extends Component{
                             return (
                                 <Drone
                                     key={index}
-                                    id={index}
+                                    droneId={index}
                                     droneAttributes={droneAttributes}
                                     currentCommands={currentCommands}
                                     parentConstraints={container}
                                     x={drone.x}
                                     y={drone.y}
+                                    ref={`drone${index}`}
+                                    allDroneCoordinates={this.getAllDroneCoordinates}
                                     droneFinished={this.droneFinished}
                                     stop={stopAllDrones}
                                     onClick={this.getDroneInfo}

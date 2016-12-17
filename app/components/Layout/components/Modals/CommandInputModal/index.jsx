@@ -247,9 +247,7 @@ class CommandInputModal extends Component{
                         >Add Command</Button>
                 </Modal.Body>
                 <Modal.Footer>
-                    <OverlayTrigger placement="bottom" overlay={tooltip}>
-                        <Button onClick={this.props.keyBoardListener}>FreeControl</Button>
-                    </OverlayTrigger>
+
                     <Button onClick={this.start}>Start</Button>
                     <Button onClick={this.props.close}>Close</Button>
                 </Modal.Footer>
@@ -258,6 +256,9 @@ class CommandInputModal extends Component{
     }
 }
 
+// <OverlayTrigger placement="bottom" overlay={tooltip}>
+//     <Button onClick={this.props.keyBoardListener}>FreeControl</Button>
+// </OverlayTrigger>
 CommandInputModal.propTypes = {
     showModal: PropTypes.bool.isRequired,
     keyBoardListener: PropTypes.func.isRequired,
