@@ -213,7 +213,7 @@ class Layout extends Component{
                     y: y + height
                 }
             }
-        })
+        });
     }
 
     // TODO

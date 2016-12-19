@@ -50,7 +50,7 @@ class Drone extends Component{
     }
 
     xConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.width || this.checkIfCrashingIntoOtherDrone()){
+        if(distance < 0 || distance > this.props.parentConstraints.width){
             this.logCrash(commandIndex,"containerCrash",distance,{x: true});
             cb(null,true);
             return true;
@@ -59,7 +59,7 @@ class Drone extends Component{
     }
 
     yConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.height || this.checkIfCrashingIntoOtherDrone() ){
+        if(distance < 0 || distance > this.props.parentConstraints.height ){
             this.logCrash(commandIndex,"containerCrash",distance,{y: true});
             cb(null,true);
             return true;
@@ -94,7 +94,6 @@ class Drone extends Component{
             let botRY = drone.bottomRight.y;
             let botLX = drone.bottomLeft.x;
             let botRX = drone.bottomRight.x;
-
 
 
             // 1st case: drone is moving down into another drone
@@ -143,7 +142,7 @@ class Drone extends Component{
                 cb(null,true);
             }
          }, (err)=>{
-             cb(err,null);
+            cb(err,null);
          });
         }
     }
@@ -173,7 +172,7 @@ class Drone extends Component{
                 cb(null,true);
             }
          }, (err)=>{
-             cb(err,null);
+            cb(err,null);
          });
         }
     }
@@ -188,7 +187,7 @@ class Drone extends Component{
                 cb(null,true);
             }
          }, (err)=>{
-             cb(err,null);
+            cb(err,null);
          });
         }
     }
