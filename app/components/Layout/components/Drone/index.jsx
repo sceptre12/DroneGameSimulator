@@ -16,8 +16,6 @@ class Drone extends Component{
             x,
             y
         }
-        // private instance variable
-        this.commandQueue = [];
 
         // react state animation wrapper
         this._animate = new ReactStateAnimation(this);
@@ -31,7 +29,6 @@ class Drone extends Component{
         this.runDroneProgram = this.runDroneProgram.bind(this);
         this.xConstraints = this.xConstraints.bind(this);
         this.yConstraints = this.yConstraints.bind(this);
-        this.queueCommands = this.queueCommands.bind(this);
         this.logCrash = this.logCrash.bind(this);
         this.checkIfCrashingIntoOtherDrone = this.checkIfCrashingIntoOtherDrone.bind(this);
     }
@@ -41,8 +38,9 @@ class Drone extends Component{
     }
 
     componentWillReceiveProps(nextProps){
-        if(nextProps.currentCommands.length){
-            this.runDroneProgram(nextProps.currentCommands);
+        if(nextProps.currentCommands.length && nextProps.droneExecutableCommands.length){
+            console.log(nextProps.currentCommands);
+            this.runDroneProgram(nextProps.droneExecutableCommands);
         }
         if(nextProps.stop){
             this.stop();
@@ -50,7 +48,7 @@ class Drone extends Component{
     }
 
     xConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.width || this.checkIfCrashingIntoOtherDrone()){
+        if(distance < 0 || distance > this.props.parentConstraints.width){
             this.logCrash(commandIndex,"containerCrash",distance,{x: true});
             cb(null,true);
             return true;
@@ -59,7 +57,8 @@ class Drone extends Component{
     }
 
     yConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.height || this.checkIfCrashingIntoOtherDrone() ){
+        console.log(this.props)
+        if(distance < 0 || distance > this.props.parentConstraints.height){
             this.logCrash(commandIndex,"containerCrash",distance,{y: true});
             cb(null,true);
             return true;
@@ -68,7 +67,6 @@ class Drone extends Component{
     }
 
     checkIfCrashingIntoOtherDrone(){
-        debugger
         const {droneId,allDroneCoordinates} = this.props;
         let getAllDroneCoordinates = allDroneCoordinates();
         const {topLeft,topRight,bottomLeft,bottomRight} = getAllDroneCoordinates[droneId];
@@ -113,7 +111,12 @@ class Drone extends Component{
 
 
     logCrash(commandIndex,type,distance,axis){
-        const {droneId} = this.props;
+        
+        const {droneId,currentCommands} = this.props;
+        console.log(this.props)
+        console.log(droneId,currentCommands)
+        let commands = currentCommands.slice();
+        console.log(commands);
         let crashOccurrence = {};
         if(axis.x){
             crashOccurrence = {
@@ -129,8 +132,8 @@ class Drone extends Component{
             }
         }
         crashOccurrence.type = type;
-        this.commandQueue[commandIndex].crashed = true;
-        this.commandQueue[commandIndex].crashOccurrence = crashOccurrence;
+        commands[commandIndex].crashed = true;
+        commands[commandIndex].crashOccurrence = crashOccurrence;
     }
 
     moveUp(distance,speed,cb,commandIndex){
@@ -205,35 +208,13 @@ class Drone extends Component{
         }
     }
 
-    queueCommands(command,functionQueue,executeTimes,action,distance,speed){
-        const {droneId} = this.props;
-        while(executeTimes > 0){
-            let commandIndex = this.commandQueue.push({
-                distance,
-                speed,
-                command,
-                crashed: false,
-                droneId
-            });
-            functionQueue.push((cb)=>{
-                action(distance,speed,cb,commandIndex - 1);
-            });
-            executeTimes --;
-        }
-    }
 
-    runDroneProgram(listOfCommands){
-        let commandFunctionQueue = [];
-        listOfCommands.forEach((commandOptions)=>{
-            const {command, executionNum, distance, speed, droneId} = commandOptions;
-            if(droneId !== this.props.droneId) return;
-            this.queueCommands(command,commandFunctionQueue,executionNum,this[`move${command}`],distance,speed);
-        });
-
+    runDroneProgram(droneExecutableCommands){
+        console.log(this.props)
         // Executes the commands syncroniously
-        series(commandFunctionQueue, (err,results)=>{
-            this.props.droneFinished(this.commandQueue.slice());
-            this.commandQueue = [];
+        series(droneExecutableCommands, (err,results)=>{
+            // this.props.droneFinished(this.commandQueue.slice());
+            // this.commandQueue = [];
         });
     }
 
@@ -253,6 +234,7 @@ class Drone extends Component{
 
 Drone.propTypes = {
     currentCommands: PropTypes.array.isRequired,
+    droneExecutableCommands: PropTypes.array.isRequired,
     droneId: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,

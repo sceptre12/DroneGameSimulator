@@ -71,6 +71,9 @@ class Layout extends Component{
             showCommandModal: false,
             commandHistory: [],
             currentCommands: [],
+            droneExecutableCommands: [
+                []
+            ],
             stopAllDrones: false
         }
         this.launchCommandModal = this.launchCommandModal.bind(this);
@@ -84,6 +87,7 @@ class Layout extends Component{
         this.getDroneInfo = this.getDroneInfo.bind(this);
         this.addDrone = this.addDrone.bind(this);
         this.getAllDroneCoordinates = this.getAllDroneCoordinates.bind(this);
+        this.queueCommands = this.queueCommands.bind(this);
     }
 
 
@@ -105,12 +109,59 @@ class Layout extends Component{
             stopAllDrones: true
         });
     }
+    
+    
+    queueCommands(command,droneCommandList,droneExecutables,executeTimes,action,distance,speed, droneId){
+        
+        // returns list of droneId's
+        let droneRefs = Object.keys(this.refs).filter((key)=>{
+            if(key.includes('drone')) return true;
+            return false;
+        });
+        
+        while(executeTimes > 0){
+            // populates the drone command list with the specific instructions each drone gets
+            let commandIndex = droneCommandList.push({
+                distance,
+                speed,
+                command,
+                crashed: false,
+                droneId
+            });
+            console.log(droneId)
+            // Creates an async wrapper which the drones can use to execute commands syncroniously 
+            droneExecutables[droneId].push((cb)=>{
+                /**
+                 * passes the commands to the drones action methods 
+                 */
+                this.refs[droneRefs[droneId]][`move${action}`](distance,speed,cb,commandIndex - 1);
+            });
+            executeTimes --; 
+        }
+        console.log(droneCommandList);
+    }
 
 
     automateDrones(CommandList){
+        
         this.setState({
-            currentCommands: CommandList,
             showCommandModal: false
+        },()=>{
+            const {droneExecutableCommands, currentCommands} = this.state;
+            
+            let droneExecutables = droneExecutableCommands.slice();
+            let droneCommandList = currentCommands.slice();
+            
+            // Loops through the general commands and breaks them down into something the drones can work with
+            CommandList.forEach((commandOptions)=>{
+                const {command, executionNum, distance, speed, droneId} = commandOptions;
+                this.queueCommands(command,droneCommandList,droneExecutables,executionNum,command,distance,speed, droneId);
+            });
+            
+            this.setState({
+                currentCommands: droneCommandList,
+                droneExecutableCommands: droneExecutables
+            })
         });
     }
 
@@ -163,7 +214,7 @@ class Layout extends Component{
     }
 
     addDrone(){
-        const {droneList, droneAttributes:{width}} = this.state;
+        const {droneList, droneExecutableCommands, droneAttributes:{width}} = this.state;
         this.setState({
             droneList: droneList.concat({
                 x: 0,
@@ -179,7 +230,8 @@ class Layout extends Component{
                     })
                 }
                 return accumulator;
-            },[])
+            },[]),
+            droneExecutableCommands: droneExecutableCommands.concat([[]])
         })
     }
 
@@ -227,7 +279,7 @@ class Layout extends Component{
     }
 
     render(){
-        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes} = this.state;
+        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -252,6 +304,7 @@ class Layout extends Component{
                                     droneId={index}
                                     droneAttributes={droneAttributes}
                                     currentCommands={currentCommands}
+                                    droneExecutableCommands={droneExecutableCommands[index]}
                                     parentConstraints={container}
                                     x={drone.x}
                                     y={drone.y}
