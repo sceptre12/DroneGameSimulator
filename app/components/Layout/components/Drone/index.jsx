@@ -73,16 +73,17 @@ class Drone extends Component{
     checkIfCrashingIntoOtherDrone(){
         const {droneId,allDroneCoordinates} = this.props;
         let getAllDroneCoordinates = allDroneCoordinates();
+        
         const {topLeft,topRight,bottomLeft,bottomRight} = getAllDroneCoordinates[droneId];
         var crashed = false;
-
+        
         getAllDroneCoordinates.forEach((drone,index)=>{
             if(index !== droneId){
                 crashed = detectIfWithinAnotherDroneBoundaries(drone);
             }
         });
-
-        console.log('creasheee',crashed)
+        
+        
 
         return crashed;
 
@@ -96,13 +97,12 @@ class Drone extends Component{
             let botRY = drone.bottomRight.y;
             let botLX = drone.bottomLeft.x;
             let botRX = drone.bottomRight.x;
-
-            // 1st case: drone is moving down into another drone
-            // side affect: handles drone moving left and right into another drone
-            return(between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX)) ||
-            // 2nd case: drone is moving up into another drone
-            // side affect: handles drone moving left and right into another drone
-            (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX))
+            
+            
+            return (between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX)) 
+                || (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX)) 
+                || (between(bottomRight.y,topRY,botRY) && between(bottomRight.x,topLX,topRX))
+                || (between(topRight.y,topRY,botRY) && between(topRight.x,topLX,topRX));
         }
 
         function between(val,min,max){
@@ -236,9 +236,14 @@ class Drone extends Component{
     runDroneProgram(droneExecutableCommands){
         // Executes the commands syncroniously
         series(droneExecutableCommands, (err,results)=>{
-            this.props.droneFinished(this.currentCommands.slice(),this.props.droneId);
+            if(!err){
+                this.props.droneFinished(this.currentCommands.slice(),this.props.droneId);
+            }
             this.currentCommands = [];
             this.currentCommand = {};
+            if(err){
+                console.log(err);
+            }
         });
     }
 
