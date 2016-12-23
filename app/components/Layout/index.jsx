@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
+import LayoutHelper from './LayoutHelper';
 import {Drone, CommandInputModal} from './components';
 import './index.scss';
 
@@ -71,6 +72,9 @@ class Layout extends Component{
             showCommandModal: false,
             commandHistory: [],
             currentCommands: [],
+            droneExecutableCommands: [
+                []
+            ],
             stopAllDrones: false
         }
         this.launchCommandModal = this.launchCommandModal.bind(this);
@@ -84,6 +88,7 @@ class Layout extends Component{
         this.getDroneInfo = this.getDroneInfo.bind(this);
         this.addDrone = this.addDrone.bind(this);
         this.getAllDroneCoordinates = this.getAllDroneCoordinates.bind(this);
+        this.queueCommands = this.queueCommands.bind(this);
     }
 
 
@@ -107,10 +112,85 @@ class Layout extends Component{
     }
 
 
+    queueCommands(command,droneCommandList,droneExecutables,executeTimes,action,distance,speed, droneId){
+
+        // returns list of droneId's
+        let droneRefs = Object.keys(this.refs).filter((key)=>{
+            if(key.includes('drone')) return true;
+            return false;
+        });
+
+        while(executeTimes > 0){
+            // populates the drone command list with the specific instructions each drone gets
+            let commandIndex = droneCommandList.push({
+                distance,
+                speed,
+                command,
+                crashed: false,
+                droneId
+            });
+            console.log(droneId)
+            // Creates an async wrapper which the drones can use to execute commands syncroniously
+            droneExecutables[droneId].push((cb)=>{
+                /**
+                 * passes the commands to the drones action methods
+                 */
+                this.refs[droneRefs[droneId]][`move${action}`](distance,speed,cb,commandIndex - 1);
+            });
+            executeTimes --;
+        }
+        console.log(droneCommandList);
+    }
+
+
+    queueCommands(command,droneCommandList,droneExecutables,executeTimes,action,distance,speed, droneId){
+
+        // returns list of droneId's
+        let droneRefs = Object.keys(this.refs).filter((key)=>{
+            if(key.includes('drone')) return true;
+            return false;
+        });
+
+        while(executeTimes > 0){
+            // populates the drone command list with the specific instructions each drone gets
+            let commandIndex = droneCommandList.push({
+                distance,
+                speed,
+                command,
+                crashed: false,
+                droneId
+            });
+            // Creates an async wrapper which the drones can use to execute commands syncroniously
+            droneExecutables[droneId].push((cb)=>{
+                /**
+                 * passes the commands to the drones action methods
+                 */
+                this.refs[droneRefs[droneId]][`move${action}`](distance,speed,cb,commandIndex - 1);
+            });
+            executeTimes --;
+        }
+    }
+
+
     automateDrones(CommandList){
+
         this.setState({
-            currentCommands: CommandList,
             showCommandModal: false
+        },()=>{
+            const {droneExecutableCommands, currentCommands} = this.state;
+
+            let droneExecutables = droneExecutableCommands.slice();
+            let droneCommandList = currentCommands.slice();
+
+            // Loops through the general commands and breaks them down into something the drones can work with
+            CommandList.forEach((commandOptions)=>{
+                const {command, executionNum, distance, speed, droneId} = commandOptions;
+                this.queueCommands(command,droneCommandList,droneExecutables,executionNum,command,distance,speed, droneId);
+            });
+            this.setState({
+                currentCommands: droneCommandList,
+                droneExecutableCommands: droneExecutables
+            })
         });
     }
 
@@ -145,9 +225,8 @@ class Layout extends Component{
         });
     }
 
-    droneFinished(droneResults){
-        const {currentCommands, commandHistory} = this.state;
-
+    droneFinished(droneResults,droneId){
+        const {currentCommands, commandHistory,droneExecutableCommands} = this.state;
         this.setState({
             commandHistory: commandHistory.concat([{
                 currentCommands,
@@ -156,14 +235,17 @@ class Layout extends Component{
                     date: new Date()
                 }
             }]),
-            currentCommands: []
+            currentCommands: [],
+            droneExecutableCommands: droneExecutableCommands.map((executables,index)=>{
+                return index === droneId? [] : executables;
+            })
         },(cb)=>{
             console.log(this.state.commandHistory)
         });
     }
 
     addDrone(){
-        const {droneList, droneAttributes:{width}} = this.state;
+        const {droneList, droneExecutableCommands, droneAttributes:{width}} = this.state;
         this.setState({
             droneList: droneList.concat({
                 x: 0,
@@ -179,13 +261,15 @@ class Layout extends Component{
                     })
                 }
                 return accumulator;
-            },[])
+            },[]),
+            droneExecutableCommands: droneExecutableCommands.concat([[]])
         })
     }
 
 
     getAllDroneCoordinates(){
         const {droneAttributes:{width,height}} = this.state;
+        const {droneActions,getDefaultCoordinates} = LayoutHelper;
 
         // returns list of droneId's
         let droneRefs = Object.keys(this.refs).filter((key)=>{
@@ -194,25 +278,11 @@ class Layout extends Component{
         });
 
         return droneRefs.map((droneKey)=>{
-            const {state:{x,y}} = this.refs[droneKey];
-            return {
-                topLeft: {
-                    x,
-                    y
-                },
-                topRight: {
-                    x: x + width,
-                    y
-                },
-                bottomLeft: {
-                    x,
-                    y: y + height
-                },
-                bottomRight: {
-                    x: x + width,
-                    y: y + height
-                }
-            }
+            const {state:{x,y}, currentCommand:{type,distance}} = this.refs[droneKey];
+
+            if(type) return droneActions[type](distance,getDefaultCoordinates(x,y,width,height));
+
+            return getDefaultCoordinates(x,y,width,height);
         });
     }
 
@@ -227,7 +297,7 @@ class Layout extends Component{
     }
 
     render(){
-        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes} = this.state;
+        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -237,6 +307,7 @@ class Layout extends Component{
                     close={this.closeCommandModal}
                     keyBoardListener={this.keyBoardListener}
                     automateDrones={this.automateDrones}
+                    addDrone={this.addDrone}
                     />
                 <div className="btn-group" role="group" aria-label="...">
                   <button type="button" className="btn btn-success" onClick={this.addDrone}>Add Drone</button>
@@ -252,6 +323,7 @@ class Layout extends Component{
                                     droneId={index}
                                     droneAttributes={droneAttributes}
                                     currentCommands={currentCommands}
+                                    droneExecutableCommands={droneExecutableCommands[index]}
                                     parentConstraints={container}
                                     x={drone.x}
                                     y={drone.y}

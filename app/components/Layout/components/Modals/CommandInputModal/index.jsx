@@ -127,6 +127,9 @@ class CommandInputModal extends Component{
     }
 
     populateCommandOptionListFromFile(data){
+        var droneSet = new Set();
+        droneSet.add(0);// inital drone
+
         this.setState({
             CommandOptionList: data.filter((a)=>{
                 if(Object.keys(a).length !== 5){
@@ -136,6 +139,11 @@ class CommandInputModal extends Component{
             }).map((instructions)=>{
                 const {listOfCommands, listOfDistance ,listOfExecutionNum, listOfSpeeds} = this.state.CommandOptionList[0];
                 const {command,speed,distance,droneId,executionNum} = instructions;
+                if(!droneSet.has(droneId)){
+                    droneSet.add(droneId);
+                    this.props.addDrone();
+                }
+
                 return {
                     listOfCommands,
                     listOfDistance,
@@ -265,7 +273,8 @@ CommandInputModal.propTypes = {
     close: PropTypes.func.isRequired,
     automateDrones: PropTypes.func.isRequired,
     defaultCommands: PropTypes.object.isRequired,
-    droneListLength: PropTypes.number.isRequired
+    droneListLength: PropTypes.number.isRequired,
+    addDrone: PropTypes.func.isRequired
 }
 
 export default CommandInputModal;

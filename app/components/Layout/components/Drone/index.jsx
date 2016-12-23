@@ -11,13 +11,15 @@ class Drone extends Component{
 
 
     init(){
-        const {x,y} = this.props;
+        const {x,y ,currentCommands} = this.props;
         this.state={
             x,
             y
         }
-        // private instance variable
-        this.commandQueue = [];
+
+        // Instance Variables
+        this.currentCommands = [];
+        this.currentCommand = {};
 
         // react state animation wrapper
         this._animate = new ReactStateAnimation(this);
@@ -31,7 +33,6 @@ class Drone extends Component{
         this.runDroneProgram = this.runDroneProgram.bind(this);
         this.xConstraints = this.xConstraints.bind(this);
         this.yConstraints = this.yConstraints.bind(this);
-        this.queueCommands = this.queueCommands.bind(this);
         this.logCrash = this.logCrash.bind(this);
         this.checkIfCrashingIntoOtherDrone = this.checkIfCrashingIntoOtherDrone.bind(this);
     }
@@ -41,16 +42,18 @@ class Drone extends Component{
     }
 
     componentWillReceiveProps(nextProps){
-        if(nextProps.currentCommands.length){
-            this.runDroneProgram(nextProps.currentCommands);
+        const {currentCommands, droneExecutableCommands, stop} = nextProps;
+        if(currentCommands.length && droneExecutableCommands.length){
+            this.currentCommands = currentCommands.slice();
+            this.runDroneProgram(droneExecutableCommands);
         }
-        if(nextProps.stop){
+        if(stop){
             this.stop();
         }
     }
 
     xConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.width){
+        if(distance < 0 || distance > this.props.parentConstraints.width || this.checkIfCrashingIntoOtherDrone()){
             this.logCrash(commandIndex,"containerCrash",distance,{x: true});
             cb(null,true);
             return true;
@@ -59,7 +62,7 @@ class Drone extends Component{
     }
 
     yConstraints(distance,cb,commandIndex){
-        if(distance < 0 || distance > this.props.parentConstraints.height ){
+        if(distance < 0 || distance > this.props.parentConstraints.height || this.checkIfCrashingIntoOtherDrone()){
             this.logCrash(commandIndex,"containerCrash",distance,{y: true});
             cb(null,true);
             return true;
@@ -68,23 +71,22 @@ class Drone extends Component{
     }
 
     checkIfCrashingIntoOtherDrone(){
-        debugger
         const {droneId,allDroneCoordinates} = this.props;
         let getAllDroneCoordinates = allDroneCoordinates();
-        const {topLeft,topRight,bottomLeft,bottomRight} = getAllDroneCoordinates[droneId];
-        var crashed = false;
+
+
+        let crashed = false;
 
         getAllDroneCoordinates.forEach((drone,index)=>{
-            if(index !== droneId){
-                crashed = detectIfWithinAnotherDroneBoundaries(drone);
+            if(index !== droneId && !crashed){
+                crashed = detectIfWithinAnotherDroneBoundaries(drone,getAllDroneCoordinates[droneId]);
             }
         });
 
-        console.log('creasheee',crashed)
-
         return crashed;
 
-        function detectIfWithinAnotherDroneBoundaries(drone){
+        function detectIfWithinAnotherDroneBoundaries(drone,parentDrone){
+            const {topLeft,topRight,bottomLeft,bottomRight} = parentDrone;
 
             let topLY = drone.topLeft.y;
             let topRY = drone.topRight.y;
@@ -95,13 +97,10 @@ class Drone extends Component{
             let botLX = drone.bottomLeft.x;
             let botRX = drone.bottomRight.x;
 
-
-            // 1st case: drone is moving down into another drone
-            // side affect: handles drone moving left and right into another drone
-            return(between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX)) ||
-            // 2nd case: drone is moving up into another drone
-            // side affect: handles drone moving left and right into another drone
-            (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX))
+            return (between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX))
+                || (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX))
+                || (between(bottomRight.y,topRY,botRY) && between(bottomRight.x,topLX,topRX))
+                || (between(topRight.y,topRY,botRY) && between(topRight.x,topLX,topRX));
         }
 
         function between(val,min,max){
@@ -113,6 +112,7 @@ class Drone extends Component{
 
     logCrash(commandIndex,type,distance,axis){
         const {droneId} = this.props;
+
         let crashOccurrence = {};
         if(axis.x){
             crashOccurrence = {
@@ -128,67 +128,93 @@ class Drone extends Component{
             }
         }
         crashOccurrence.type = type;
-        this.commandQueue[commandIndex].crashed = true;
-        this.commandQueue[commandIndex].crashOccurrence = crashOccurrence;
+
+        this.currentCommands[commandIndex].crashed = true;
+        this.currentCommands[commandIndex].crashOccurrence = crashOccurrence;
     }
 
     moveUp(distance,speed,cb,commandIndex){
+        this.currentCommand = {
+            distance,
+            speed,
+            commandIndex,
+            type: 'moveUp'
+        }
         var output = this.state.y - distance;
         if(!this.yConstraints(output,cb,commandIndex)){
-           this._animate.linearInOut('y', output, speed).then(()=>{
-            if(this.props.stop){
-                cb("Instructions Halted",null);
-            }else{
-                cb(null,true);
-            }
-         }, (err)=>{
-            cb(err,null);
-         });
+            this._animate.linearInOut('y', output, speed).then(()=>{
+                if(this.props.stop){
+                    cb("Instructions Halted",null);
+                }else{
+                    cb(null,true);
+                }
+            }, (err)=>{
+                cb(err,null);
+            });
         }
     }
 
     moveLeft(distance,speed,cb,commandIndex){
+        this.currentCommand ={
+            distance,
+            speed,
+            commandIndex,
+            type: 'moveLeft'
+        }
         var output = this.state.x - distance;
         if(!this.xConstraints(output,cb,commandIndex)){
-          this._animate.linearInOut('x', output, speed).then(()=>{
-            if(this.props.stop){
-                cb("Instructions Halted",null);
-            }else{
-                cb(null,true);
-            }
-         }, (err)=>{
-             cb(err,null);
-         });
+            this._animate.linearInOut('x', output, speed).then(()=>{
+                if(this.props.stop){
+                    cb("Instructions Halted",null);
+                }else{
+                    cb(null,true);
+                }
+            }, (err)=>{
+                cb(err,null);
+            });
         }
     }
 
     moveRight(distance,speed,cb,commandIndex){
+        this.currentCommand ={
+            distance,
+            speed,
+            commandIndex,
+            type: 'moveRight'
+        }
         var output = this.state.x + distance;
         if(!this.xConstraints(output,cb,commandIndex)){
-           this._animate.linearInOut('x', output, speed).then(()=>{
-            if(this.props.stop){
-                cb("Instructions Halted",null);
-            }else{
-                cb(null,true);
-            }
-         }, (err)=>{
-            cb(err,null);
-         });
+            this._animate.linearInOut('x', output, speed).then(()=>{
+                if(this.props.stop){
+                    cb("Instructions Halted",null);
+                }else{
+                    cb(null,true);
+                }
+            }, (err)=>{
+                cb(err,null);
+            });
         }
     }
 
     moveDown(distance,speed,cb,commandIndex){
+        this.currentCommand ={
+            distance,
+            speed,
+            commandIndex,
+            type: 'moveDown'
+        }
+        console.log(this.currentCommand);
         var output = this.state.y + distance;
         if(!this.yConstraints(output,cb,commandIndex)){
            this._animate.linearInOut('y',output, speed).then(()=>{
-            if(this.props.stop){
-                cb("Instructions Halted",null);
-            }else{
-                cb(null,true);
-            }
-         }, (err)=>{
-            cb(err,null);
-         });
+                if(this.props.stop){
+                    cb("Instructions Halted",null);
+                }else{
+                    cb(null,true);
+                }
+            }, (err)=>{
+                cb(err,null);
+            });
         }
     }
 
@@ -204,35 +230,18 @@ class Drone extends Component{
         }
     }
 
-    queueCommands(command,functionQueue,executeTimes,action,distance,speed){
-        const {droneId} = this.props;
-        while(executeTimes > 0){
-            let commandIndex = this.commandQueue.push({
-                distance,
-                speed,
-                command,
-                crashed: false,
-                droneId
-            });
-            functionQueue.push((cb)=>{
-                action(distance,speed,cb,commandIndex - 1);
-            });
-            executeTimes --;
-        }
-    }
 
-    runDroneProgram(listOfCommands){
-        let commandFunctionQueue = [];
-        listOfCommands.forEach((commandOptions)=>{
-            const {command, executionNum, distance, speed, droneId} = commandOptions;
-            if(droneId !== this.props.droneId) return;
-            this.queueCommands(command,commandFunctionQueue,executionNum,this[`move${command}`],distance,speed);
-        });
-
+    runDroneProgram(droneExecutableCommands){
         // Executes the commands syncroniously
-        series(commandFunctionQueue, (err,results)=>{
-            this.props.droneFinished(this.commandQueue.slice());
-            this.commandQueue = [];
+        series(droneExecutableCommands, (err,results)=>{
+            if(!err){
+                this.props.droneFinished(this.currentCommands.slice(),this.props.droneId);
+            }
+            this.currentCommands = [];
+            this.currentCommand = {};
+            if(err){
+                console.log(err);
+            }
         });
     }
 
@@ -252,6 +261,7 @@ class Drone extends Component{
 
 Drone.propTypes = {
     currentCommands: PropTypes.array.isRequired,
+    droneExecutableCommands: PropTypes.array.isRequired,
     droneId: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,
