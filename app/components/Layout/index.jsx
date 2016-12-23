@@ -307,6 +307,7 @@ class Layout extends Component{
                     close={this.closeCommandModal}
                     keyBoardListener={this.keyBoardListener}
                     automateDrones={this.automateDrones}
+                    addDrone={this.addDrone}
                     />
                 <div className="btn-group" role="group" aria-label="...">
                   <button type="button" className="btn btn-success" onClick={this.addDrone}>Add Drone</button>

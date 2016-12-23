@@ -73,21 +73,20 @@ class Drone extends Component{
     checkIfCrashingIntoOtherDrone(){
         const {droneId,allDroneCoordinates} = this.props;
         let getAllDroneCoordinates = allDroneCoordinates();
-        
-        const {topLeft,topRight,bottomLeft,bottomRight} = getAllDroneCoordinates[droneId];
-        var crashed = false;
-        
+
+
+        let crashed = false;
+
         getAllDroneCoordinates.forEach((drone,index)=>{
-            if(index !== droneId){
-                crashed = detectIfWithinAnotherDroneBoundaries(drone);
+            if(index !== droneId && !crashed){
+                crashed = detectIfWithinAnotherDroneBoundaries(drone,getAllDroneCoordinates[droneId]);
             }
         });
-        
-        
 
         return crashed;
 
-        function detectIfWithinAnotherDroneBoundaries(drone){
+        function detectIfWithinAnotherDroneBoundaries(drone,parentDrone){
+            const {topLeft,topRight,bottomLeft,bottomRight} = parentDrone;
 
             let topLY = drone.topLeft.y;
             let topRY = drone.topRight.y;
@@ -97,10 +96,10 @@ class Drone extends Component{
             let botRY = drone.bottomRight.y;
             let botLX = drone.bottomLeft.x;
             let botRX = drone.bottomRight.x;
-            
-            
-            return (between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX)) 
-                || (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX)) 
+
+
+            return (between(bottomLeft.y,topLY,botLY) && between(bottomLeft.x,topLX,topRX))
+                || (between(topLeft.y,topLY,botLY) && between(topLeft.x,topLX,topRX))
                 || (between(bottomRight.y,topRY,botRY) && between(bottomRight.x,topLX,topRX))
                 || (between(topRight.y,topRY,botRY) && between(topRight.x,topLX,topRX));
         }
