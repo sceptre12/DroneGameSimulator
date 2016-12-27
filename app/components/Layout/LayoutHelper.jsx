@@ -30,7 +30,38 @@ function moveRight(distance,defaultCoordinates){
     return defaultCoordinates;
 }
 
+// constants
+const listOfCommands  = [
+    'Up',
+    'Down',
+    'Right',
+    'Left'
+];
+const listOfSpeeds = [
+    1000,
+    500,
+    250,
+    125
+];
+const listOfDistance = [
+    50,
+    40,
+    30,
+    20,
+    10
+];
+const listOfExecutionNum = [
+    4,
+    3,
+    2,
+    1
+]
+
 export default {
+    listOfExecutionNum,
+    listOfDistance,
+    listOfCommands,
+    listOfSpeeds,
     droneActions: {
         moveUp,
         moveDown,

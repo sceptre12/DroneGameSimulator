@@ -1,13 +1,10 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
 import LayoutHelper from './LayoutHelper';
-import {Drone, CommandInputModal} from './components';
+import {Drone, CommandInputModal, Overlay} from './components';
 import './index.scss';
 
 
-/**
-    Todo Make it a list of Drones
-*/
 class Layout extends Component{
     constructor(props){
         super(props);
@@ -16,31 +13,7 @@ class Layout extends Component{
     }
 
     init(){
-        const listOfCommands  = [
-            'Up',
-            'Down',
-            'Right',
-            'Left'
-        ];
-        const listOfSpeeds = [
-            1000,
-            500,
-            250,
-            125
-        ];
-        const listOfDistance = [
-            50,
-            40,
-            30,
-            20,
-            10
-        ];
-        const listOfExecutionNum = [
-            4,
-            3,
-            2,
-            1
-        ]
+        const {listOfExecutionNum,listOfDistance,listOfCommands,listOfSpeeds } = LayoutHelper;
         this.state={
             defaultCommands: {
                 listOfCommands,
@@ -129,37 +102,6 @@ class Layout extends Component{
                 crashed: false,
                 droneId
             });
-            console.log(droneId)
-            // Creates an async wrapper which the drones can use to execute commands syncroniously
-            droneExecutables[droneId].push((cb)=>{
-                /**
-                 * passes the commands to the drones action methods
-                 */
-                this.refs[droneRefs[droneId]][`move${action}`](distance,speed,cb,commandIndex - 1);
-            });
-            executeTimes --;
-        }
-        console.log(droneCommandList);
-    }
-
-
-    queueCommands(command,droneCommandList,droneExecutables,executeTimes,action,distance,speed, droneId){
-
-        // returns list of droneId's
-        let droneRefs = Object.keys(this.refs).filter((key)=>{
-            if(key.includes('drone')) return true;
-            return false;
-        });
-
-        while(executeTimes > 0){
-            // populates the drone command list with the specific instructions each drone gets
-            let commandIndex = droneCommandList.push({
-                distance,
-                speed,
-                command,
-                crashed: false,
-                droneId
-            });
             // Creates an async wrapper which the drones can use to execute commands syncroniously
             droneExecutables[droneId].push((cb)=>{
                 /**
@@ -170,7 +112,6 @@ class Layout extends Component{
             executeTimes --;
         }
     }
-
 
     automateDrones(CommandList){
 
@@ -187,6 +128,7 @@ class Layout extends Component{
                 const {command, executionNum, distance, speed, droneId} = commandOptions;
                 this.queueCommands(command,droneCommandList,droneExecutables,executionNum,command,distance,speed, droneId);
             });
+
             this.setState({
                 currentCommands: droneCommandList,
                 droneExecutableCommands: droneExecutables
@@ -314,6 +256,7 @@ class Layout extends Component{
                   <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Launch Commands</button>
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop All Drone Actions</button>
                 </div>
+                <Overlay />
                 <div id="playground" ref={this.getContainerWidth}>
                     {
                         this.state.droneList.map((drone,index)=>{
