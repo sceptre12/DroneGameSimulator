@@ -31,7 +31,6 @@ class Layout extends Component{
                 {
                     x: 0,
                     y: 0,
-                    element: {}
                 }
             ],
             container:{
@@ -42,12 +41,13 @@ class Layout extends Component{
                 width: 100,
                 height: 100
             },
-            showCommandModal: false,
             commandHistory: [],
             currentCommands: [],
             droneExecutableCommands: [
                 []
             ],
+            showCommandModal: false,
+            showOverlay: false,
             stopAllDrones: false
         }
         this.launchCommandModal = this.launchCommandModal.bind(this);
@@ -100,7 +100,7 @@ class Layout extends Component{
                 speed,
                 command,
                 crashed: false,
-                droneId
+                droneId,
             });
             // Creates an async wrapper which the drones can use to execute commands syncroniously
             droneExecutables[droneId].push((cb)=>{
@@ -116,9 +116,10 @@ class Layout extends Component{
     automateDrones(CommandList){
 
         this.setState({
-            showCommandModal: false
+            showCommandModal: false,
+            showOverlay: true
         },()=>{
-            const {droneExecutableCommands, currentCommands} = this.state;
+            const {droneExecutableCommands, currentCommands,showOverlay} = this.state;
 
             let droneExecutables = droneExecutableCommands.slice();
             let droneCommandList = currentCommands.slice();
@@ -129,10 +130,17 @@ class Layout extends Component{
                 this.queueCommands(command,droneCommandList,droneExecutables,executionNum,command,distance,speed, droneId);
             });
 
-            this.setState({
-                currentCommands: droneCommandList,
-                droneExecutableCommands: droneExecutables
-            })
+            //TODO Change this logic only used for debuging and creating overlay
+            if(showOverlay){
+                this.setState({
+                    currentCommands: droneCommandList
+                })
+            }else{
+                this.setState({
+                    currentCommands: droneCommandList,
+                    droneExecutableCommands: droneExecutables
+                })
+            }
         });
     }
 
@@ -177,7 +185,7 @@ class Layout extends Component{
                     date: new Date()
                 }
             }]),
-            currentCommands: [],
+            // currentCommands: [],
             droneExecutableCommands: droneExecutableCommands.map((executables,index)=>{
                 return index === droneId? [] : executables;
             })
@@ -239,7 +247,7 @@ class Layout extends Component{
     }
 
     render(){
-        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands} = this.state;
+        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands, showOverlay} = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -256,7 +264,7 @@ class Layout extends Component{
                   <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Launch Commands</button>
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop All Drone Actions</button>
                 </div>
-                <Overlay />
+                <Overlay currentCommands={currentCommands} droneList={droneList}/>
                 <div id="playground" ref={this.getContainerWidth}>
                     {
                         this.state.droneList.map((drone,index)=>{
