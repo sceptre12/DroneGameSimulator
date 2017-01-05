@@ -34,10 +34,13 @@ const renderCircles = (props) => {
     const circleProps = {
       cx: xScale(props)(coords.x),
       cy: yScale(props)(coords.y),
-      r: 3,
+      r: 5,
       key: index
     };
-    return <circle {...circleProps} />;
+    const style= {
+        fill: props.color
+    }
+    return <circle {...circleProps} style={style}/>;
   };
 };
 

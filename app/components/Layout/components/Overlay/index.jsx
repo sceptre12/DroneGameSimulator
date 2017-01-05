@@ -51,10 +51,10 @@ class Overlay extends Component {
                     return command.droneId === index
                 })
             }
-        })
+        });
 
         //TODO The concat isnt working because the current index is undefined
-        // Need to fix 
+        // Need to fix
         droneListCommands.forEach((operation,index) => {
             const {
                 droneInitalCoordinates: {
@@ -62,20 +62,15 @@ class Overlay extends Component {
                     y
                 }
             } = operation;
+            points[index] = [];
             points[index] = points[index].concat(operation.currentCommands.reduce((accumulator, currentCommand, currentIndex) => {
                 /**
                         Gets the previous coordinates and based on the current command
                         calculates the new coordinates the drone is going to visit
-                        accumulator[currentIndex] === index 0 = x index 1 = y
                     */
                 accumulator.push(this[`move${currentCommand.command}`](currentCommand.distance, accumulator[currentIndex]));
                 return accumulator;
-            }, [
-                {
-                    x,
-                    y
-                }
-            ]));
+            }, [{x,y}]));
         });
         console.log(points)
         return points;
