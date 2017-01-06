@@ -19,7 +19,6 @@ const xScale = (props) => {
 
 // Returns a function that "scales" Y coordinates from the data to fit the chart
 const yScale = (props) => {
-    console.log(props)
     return scaleLinear().domain([
         0,
         yMax(props.data)

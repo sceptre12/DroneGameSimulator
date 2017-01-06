@@ -46,6 +46,10 @@ class Layout extends Component{
             droneExecutableCommands: [
                 []
             ],
+            generatedCommands:{
+                droneCommandList: [],
+                droneExecutables: []
+            },
             showCommandModal: false,
             showOverlay: false,
             stopAllDrones: false
@@ -55,13 +59,14 @@ class Layout extends Component{
         this.getContainerWidth = this.getContainerWidth.bind(this);
         this.closeCommandModal = this.closeCommandModal.bind(this);
         this.keyBoardListener = this.keyBoardListener.bind(this);
-        this.automateDrones = this.automateDrones.bind(this);
+        this.generateDroneCommands = this.generateDroneCommands.bind(this);
         this.droneFinished = this.droneFinished.bind(this);
         this.removeDrone = this.removeDrone.bind(this);
         this.getDroneInfo = this.getDroneInfo.bind(this);
         this.addDrone = this.addDrone.bind(this);
         this.getAllDroneCoordinates = this.getAllDroneCoordinates.bind(this);
         this.queueCommands = this.queueCommands.bind(this);
+        this.launchDroneCommands = this.launchDroneCommands.bind(this);
     }
 
 
@@ -113,7 +118,7 @@ class Layout extends Component{
         }
     }
 
-    automateDrones(CommandList){
+    generateDroneCommands(CommandList){
 
         this.setState({
             showCommandModal: false,
@@ -130,18 +135,22 @@ class Layout extends Component{
                 this.queueCommands(command,droneCommandList,droneExecutables,executionNum,command,distance,speed, droneId);
             });
 
-            //TODO Change this logic only used for debuging and creating overlay
-            if(showOverlay){
-                this.setState({
-                    currentCommands: droneCommandList
-                })
-            }else{
-                this.setState({
-                    currentCommands: droneCommandList,
-                    droneExecutableCommands: droneExecutables
-                })
-            }
+            this.setState({
+                generatedCommands:{
+                    droneExecutables,
+                    droneCommandList
+                }
+            })
         });
+    }
+    
+    launchDroneCommands(){
+        const {generatedCommands:{droneCommandList,droneExecutables}} = this.state;
+        this.setState({
+            showOverlay: false,
+            currentCommands: droneCommandList,
+            droneExecutableCommands: droneExecutables
+        })
     }
 
     keyBoardListener(){
@@ -247,7 +256,7 @@ class Layout extends Component{
     }
 
     render(){
-        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands, showOverlay} = this.state;
+        const {defaultCommands, showCommandModal, container , currentCommands, stopAllDrones,droneList, droneAttributes, droneExecutableCommands, showOverlay, generatedCommands } = this.state;
         return (
             <div id="layout" className="container">
                 <CommandInputModal
@@ -256,7 +265,7 @@ class Layout extends Component{
                     showModal={showCommandModal}
                     close={this.closeCommandModal}
                     keyBoardListener={this.keyBoardListener}
-                    automateDrones={this.automateDrones}
+                    generateDroneCommands={this.generateDroneCommands}
                     addDrone={this.addDrone}
                     />
                 <div className="btn-group" role="group" aria-label="...">
@@ -264,7 +273,10 @@ class Layout extends Component{
                   <button type="button" className="btn btn-success" onClick={this.launchCommandModal}>Launch Commands</button>
                   <button type="button" className="btn btn-danger" onClick={this.stop}>Stop All Drone Actions</button>
                 </div>
-                <Overlay currentCommands={currentCommands} droneList={droneList}/>
+                {
+                    showOverlay? <Overlay generatedCommands={generatedCommands} droneList={droneList} launchDroneCommands={this.launchDroneCommands}/>: ''
+                }
+                
                 <div id="playground" ref={this.getContainerWidth}>
                     {
                         this.state.droneList.map((drone,index)=>{

@@ -2,11 +2,6 @@ import React, {Component} from 'react';
 import {ScatterPlot} from './components';
 import './index.scss';
 
-const styles = {
-    width: 500,
-    height: 300,
-    padding: 30
-}
 
 // The number of data points for the chart.
 const numDataPoints = 50;
@@ -36,25 +31,30 @@ class Overlay extends Component {
                         y: 0
                     }
                 ]
-            ]
+            ],
+            styles: {
+                width: 0,
+                height: 0,
+                padding: 30
+            }
         };
         this.createPoints = this.createPoints.bind(this);
+        this.getContainerWidth = this.getContainerWidth.bind(this);
     }
 
     createPoints() {
         var points = [];
-        const {currentCommands, droneList} = this.props;
+        const {generatedCommands:{droneCommandList}, droneList} = this.props;
         var droneListCommands = droneList.map((drone, index) => {
             return {
                 droneInitalCoordinates: drone,
-                currentCommands: currentCommands.filter((command) => {
+                currentCommands: droneCommandList.filter((command) => {
                     return command.droneId === index
                 })
             }
         });
-
-        //TODO The concat isnt working because the current index is undefined
-        // Need to fix
+        
+        // Creates coordinate points for each drone
         droneListCommands.forEach((operation,index) => {
             const {
                 droneInitalCoordinates: {
@@ -83,6 +83,7 @@ class Overlay extends Component {
             y: y - distance
         };
     }
+    
     moveDown(distance, previousCoord) {
         const {x, y} = previousCoord;
         return {
@@ -90,6 +91,7 @@ class Overlay extends Component {
             y: y + distance
         }
     }
+    
     moveRight(distance, previousCoord) {
         const {x, y} = previousCoord;
         return {
@@ -97,6 +99,7 @@ class Overlay extends Component {
             y
         }
     }
+    
     moveLeft(distance, previousCoord) {
         const {x, y} = previousCoord;
         return {
@@ -105,18 +108,40 @@ class Overlay extends Component {
         }
     }
 
-    randomizeData() {
+    generatePoints() {
         this.setState({data: this.createPoints()});
+    }
+    
+    getContainerWidth(el){
+        console.log(el)
+        var styles = window.getComputedStyle(el);
+        this.setState({
+            styles: {
+                height: parseInt(styles.height,10),
+                width: parseInt(styles.width,10),
+                padding: 30
+            }
+        });
     }
 
     render() {
+        const {launchDroneCommands,generatedCommands:{droneCommandList}} = this.props;
         return (
             <div id="droneOverlay">
-                <ScatterPlot {...this.state} {...styles}/>
-                <div className="controls">
-                    <button className="btn randomize" onClick={() => this.randomizeData()}>
-                        Randomize Data
-                    </button>
+                <div className="contentArea" ref={this.getContainerWidth} >
+                    <ScatterPlot {...this.state} {...this.state.styles}/>
+                    {
+                        droneCommandList.length?
+                        <div className="controls">
+                            <button className="btn" onClick={() => this.generatePoints()}>
+                                Draw path 
+                            </button>
+                            <button className="btn" onClick={launchDroneCommands}>
+                                Start Drones
+                            </button>
+                        </div>:
+                        ''
+                    }
                 </div>
             </div>
         )

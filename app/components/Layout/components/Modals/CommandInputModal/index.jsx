@@ -120,7 +120,7 @@ class CommandInputModal extends Component{
     }
 
     start(){
-        this.props.automateDrones(this.state.CommandOptionList.slice());
+        this.props.generateDroneCommands(this.state.CommandOptionList.slice());
         this.setState({
             CommandOptionList: [Object.assign({},this.props.defaultCommands)]
         });
@@ -271,7 +271,7 @@ CommandInputModal.propTypes = {
     showModal: PropTypes.bool.isRequired,
     keyBoardListener: PropTypes.func.isRequired,
     close: PropTypes.func.isRequired,
-    automateDrones: PropTypes.func.isRequired,
+    generateDroneCommands: PropTypes.func.isRequired,
     defaultCommands: PropTypes.object.isRequired,
     droneListLength: PropTypes.number.isRequired,
     addDrone: PropTypes.func.isRequired
